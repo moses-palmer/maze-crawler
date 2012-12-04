@@ -1,6 +1,13 @@
 import os
+import socket
 import subprocess
+import sys
 import time
+
+if sys.version_info.major < 3:
+    from httplib import CannotSendRequest, HTTPConnection
+else:
+    from http.client import CannotSendRequest, HTTPConnection
 
 # The list of servers running
 _servers = []
@@ -32,7 +39,20 @@ def _server_start():
             os.path.dirname(__file__), os.path.pardir, os.path.pardir, 'lib')}
 
     # Start bottle
-    _servers.append(subprocess.Popen(args, env = env))
+    server = subprocess.Popen(args, env = env)
+
+    # Wait for the socket to become available
+    while True:
+        assert server.poll() is None
+        try:
+            connection = HTTPConnection(_HOST, port)
+            connection.request('GET', '/')
+            connection.getresponse().close()
+            break
+        except (CannotSendRequest, socket.error):
+            time.sleep(0.1)
+
+    _servers.append((server, connection))
 
 def _server_stop():
     """
@@ -43,7 +63,25 @@ def _server_stop():
     """
     global _servers
 
-    server = _servers.pop()
+    server, connection = _servers.pop()
     assert server.poll() is None, \
         'The current server is not running'
+    connection.close()
     server.kill()
+
+
+def _get_connection():
+    """
+    Returns a connection to the most currently started server.
+
+    @return a connection to the most currently started server
+    @raise AssertionError if the most currently started server is not running
+    @raise IndexError if no server is running
+    """
+    global _servers
+
+    server, connection = _servers[-1]
+    assert server.poll() is None, \
+        'The current server is not running'
+
+    return connection

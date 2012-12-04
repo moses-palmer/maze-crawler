@@ -168,3 +168,27 @@ def webtest(f):
     inner.suite = f.suite if hasattr(f, 'suite') else f.__globals__['__name__']
 
     return test(inner)
+
+
+def get(path):
+    """
+    Retrieves the data at path for the most currently started server with HTTP
+    GET.
+
+    If the response content type is application/json, a value parsed with
+    json.loads is returned, otherwise a string is returned.
+
+    @param path
+        The path to the data to get.
+    @return the tuple (response_code, data)
+    @raise AssertionError if the most currently started server is not running
+    """
+    c, headers = _get_connection_data()
+
+    # Parse the data
+    c.request('GET', path, headers = headers)
+    r = c.getresponse()
+    data = _get_response_data(r)
+    status = r.status
+
+    return (r.status, data)

@@ -192,3 +192,37 @@ def get(path):
     status = r.status
 
     return (r.status, data)
+
+
+def put(path, data):
+    """
+    Uploads data to path for the most currently started server with HTTP PUT.
+
+    If the response content type is application/json, a value parsed with
+    json.loads is returned, otherwise a string is returned.
+
+    @param path
+        The path to the data to get.
+    @param data
+        The data to upload. If this is a str, it will be uploaded as text/plain,
+        otherwise it will be passed to json.dumps and uploaded as
+        application/json.
+    @return the tuple (response_code, data)
+    @raise AssertionError if the most currently started server is not running
+    """
+    c, headers = _get_connection_data()
+
+    # Convert the data
+    if not isinstance(data, str):
+        data = json.dumps(data)
+        headers['Content-Type'] = 'application/json'
+    else:
+        headers['Content-Type'] = 'text/plain'
+
+    # Upload the data
+    c.request('PUT', path, data, headers)
+    r = c.getresponse()
+    data = _get_response_data(r)
+    status = r.status
+
+    return (r.status, data)

@@ -260,3 +260,27 @@ def post(path, data):
     status = r.status
 
     return (r.status, data)
+
+
+def delete(path):
+    """
+    Deletes the resource path for the most currently started server with HTTP
+    DELETE.
+
+    If the response content type is application/json, a value parsed with
+    json.loads is returned, otherwise a string is returned.
+
+    @param path
+        The path to the data to get.
+    @return the tuple (response_code, data)
+    @raise AssertionError if the most currently started server is not running
+    """
+    c, headers = _get_connection_data()
+
+    # Delete the resource
+    c.request('DELETE', path, headers = headers)
+    r = c.getresponse()
+    data = _get_response_data(r)
+    status = r.status
+
+    return (r.status, data)

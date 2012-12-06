@@ -284,3 +284,16 @@ def delete(path):
     status = r.status
 
     return (r.status, data)
+
+
+def maze_reset(**kwargs):
+    """
+    Resets the current maze by PUTing kwargs on /maze.
+
+    The response is verified.
+
+    @raise AssertionError if the maze was not created
+    """
+    status, data = post('/maze', kwargs)
+    assert status == 200, \
+        'POST /maze failed with status code %d' % status

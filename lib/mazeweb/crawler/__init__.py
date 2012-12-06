@@ -1,6 +1,7 @@
 import bottle
 
 from app import app
+import _maze
 
 
 from beaker.middleware import SessionMiddleware

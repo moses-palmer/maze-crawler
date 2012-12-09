@@ -85,3 +85,30 @@ def to_dict(maze):
         height = maze.height,
         walls = len(maze.Wall.WALLS),
         start_room = maze[(0, 0)].identifier)
+
+
+def room_to_dict(maze, room_pos):
+    """
+    Converts a room to a dict that can be passed as return value for
+    /maze/<room_identifier>.
+
+    @param maze
+        The maze to which the room belongs.
+    @param room_pos
+        The position of the room.
+    @return a dict describing the room
+    """
+    return dict(
+        identifier = maze[room_pos].identifier,
+        position = dict(
+            x = room_pos[0],
+            y = room_pos[1]),
+        center = dict(
+            x = maze.get_center(room_pos)[0],
+            y = maze.get_center(room_pos)[1]),
+        walls = [dict(
+            target = maze[maze.walk(w)].identifier
+                if w in maze[room_pos] else None,
+            span = dict(
+                start = w.span[0],
+                end = w.span[1])) for w in maze.walls(room_pos)])

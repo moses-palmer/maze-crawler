@@ -5,6 +5,8 @@ import subprocess
 import sys
 import time
 
+from .. import test
+
 if sys.version_info.major < 3:
     from httplib import CannotSendRequest, HTTPConnection
 else:
@@ -144,3 +146,25 @@ def _get_response_data(response):
         return JSONWrapper(json.loads(response.read()))
     else:
         return response.read()
+
+
+def webtest(f):
+    """
+    A decorator to make a function a test for the server.
+
+    This decorator will return a @test decorated function that starts the
+    server, makes sure a connection can be made, then calls the test function
+    and finally shuts down the server.
+    """
+    def inner():
+        _server_start()
+        try:
+            f()
+        finally:
+            _server_stop()
+
+    inner.__doc__ = f.__doc__
+    inner.func_name = f.func_name
+    inner.suite = f.suite if hasattr(f, 'suite') else f.__globals__['__name__']
+
+    return test(inner)

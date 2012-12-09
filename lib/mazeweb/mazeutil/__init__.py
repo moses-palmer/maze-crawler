@@ -40,6 +40,8 @@ def new(width = 30, height = 20, walls = 4, seed = None, **kwargs):
         maze[room_pos].identifier = identifier
         maze.room_mapping[identifier] = room_pos
 
+    maze.current_room = maze[(0, 0)].identifier
+
     return (maze, kwargs)
 
 
@@ -84,7 +86,8 @@ def to_dict(maze):
         width = maze.width,
         height = maze.height,
         walls = len(maze.Wall.WALLS),
-        start_room = maze[(0, 0)].identifier)
+        start_room = maze[(0, 0)].identifier,
+        current_room = maze.current_room)
 
 
 def room_to_dict(maze, room_pos):

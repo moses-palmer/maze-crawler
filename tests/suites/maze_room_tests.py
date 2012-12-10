@@ -46,3 +46,34 @@ def maze_room_get2():
 
     assert status == 404, \
         'GET /maze/%d returned %d instead of 404' % (room_identifier, status)
+
+
+@webtest
+def maze_room_get3():
+    """Test GET /maze/<start_room> with a default maze initialised for an
+    unreachable room"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    start_room = data.start_room
+    status, data = get('/maze/%d' % start_room)
+    assert status == 200, \
+        'GET /maze/%d returned %d instead of 200' % (start_room, status)
+
+    for next_room in (wall.target for wall in data.walls if wall.target):
+        status, data = get('/maze/%d' % next_room)
+        assert status == 200, \
+            'GET /maze/%d returned %d instead of 200' % (next_room, status)
+
+        try:
+            unreachable_room = next(wall.target for wall in data.walls
+                if wall.target and wall.target != start_room)
+        except StopIteration:
+            continue;
+        status, data = get('/maze/%d' % unreachable_room)
+        assert status == 403, \
+            'GET /maze/%d returned %d instead of 403' % (
+                unreachable_room, status)
+
+        break

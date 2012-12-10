@@ -9,6 +9,10 @@ def maze_get_room(room_identifier):
     """
     Retrieves a description of a room.
 
+    Only immediately reachable rooms will be returned.
+
+    An immediately reachable room is the current room and any connected rooms.
+
     @response.identifier
         The identifier of the room.
     @response.position
@@ -25,10 +29,6 @@ def maze_get_room(room_identifier):
         otherwise
     """
     maze = mazeutil.load()
-
-    try:
-        room_pos = maze.room_mapping[room_identifier]
-    except KeyError:
-        raise bottle.HTTPError(status = 404)
-
-    return mazeutil.room_to_dict(maze, room_pos)
+    return mazeutil.room_to_dict(
+        maze,
+        mazeutil.get_adjacent(maze, room_identifier))

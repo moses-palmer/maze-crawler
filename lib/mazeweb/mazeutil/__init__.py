@@ -115,3 +115,29 @@ def room_to_dict(maze, room_pos):
             span = dict(
                 start = w.span[0],
                 end = w.span[1])) for w in maze.walls(room_pos)])
+
+
+def get_adjacent(maze, room_identifier):
+    """
+    Returns the coordinates of an adjacent room.
+
+    @param maze
+        The maze whose room coordinates to retrieve.
+    @param room_identifier
+        The identifier of the adjacent room.
+    @return the coordinates of the adjacent room
+    @raise bottle.HTTPResponse if the room is not immediately reachable (403) or
+        if room_identifier is invalid (404)
+    """
+    try:
+        room_pos = maze.room_mapping[room_identifier]
+    except KeyError:
+        raise bottle.HTTPError(status = 404)
+
+    # Check whether the rooms are connected
+    current_room_pos = maze.room_mapping[maze.current_room]
+    if room_pos == current_room_pos \
+            or maze.adjacent(room_pos, current_room_pos):
+        return room_pos
+    else:
+        raise bottle.HTTPError(status = 403)

@@ -106,3 +106,109 @@ def maze_reset2():
 
     assert status == 204, \
         'GET /maze returned %d instead of 204' % status
+
+
+@webtest
+def maze_update0():
+    """Test PUT /maze for an uninitialised maze"""
+    status, data = put('/maze', {})
+
+    assert status == 400, \
+        'PUT /maze returned %d, not 400' % status
+
+
+@webtest
+def maze_update1():
+    """Test PUT /maze for an initialised maze with no data"""
+    maze_reset()
+
+    original_data = {}
+    status, data = put('/maze', original_data)
+
+    assert status == 200, \
+        'PUT /maze returned %d, not 200' % status
+
+
+@webtest
+def maze_update2():
+    """Test PUT /maze for an initialised maze with request to move to current
+    room"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    original_data = dict(
+        current_room = data.current_room)
+    status, data = put('/maze', original_data)
+
+    assert status == 200, \
+        'PUT /maze returned %d, not 200' % status
+
+
+@webtest
+def maze_update3():
+    """Test PUT /maze for an initialised maze with request to move to invalid
+    room"""
+    maze_reset()
+
+    original_data = dict(
+        current_room = '-1')
+    status, data = put('/maze', original_data)
+
+    assert status == 404, \
+        'PUT /maze returned %d, not 200' % status
+
+
+@webtest
+def maze_update4():
+    """Test PUT /maze with a request to move to an unreachable room"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    start_room = data.start_room
+    status, data = get('/maze/%d' % start_room)
+    assert status == 200, \
+        'GET /maze/%d returned %d instead of 200' % (start_room, status)
+
+    for next_room in (wall.target for wall in data.walls if wall.target):
+        status, data = get('/maze/%d' % next_room)
+        assert status == 200, \
+            'GET /maze/%d returned %d instead of 200' % (next_room, status)
+
+        try:
+            unreachable_room = next(wall.target for wall in data.walls
+                if wall.target and wall.target != start_room)
+        except StopIteration:
+            continue
+        original_data = dict(
+            current_room = unreachable_room)
+        status, data = put('/maze', original_data)
+
+        assert status == 403, \
+            'PUT /maze returned %d instead of 403' % status
+
+        break
+
+
+@webtest
+def maze_update5():
+    """Test PUT /maze for an initialised maze with request to move to neighbour
+    room"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    room_identifier = data.current_room
+    status, data = get('/maze/%d' % room_identifier)
+
+    next_room = next(wall.target for wall in data.walls if wall.target)
+
+    original_data = dict(
+        current_room = next_room)
+    status, data = put('/maze', original_data)
+
+    assert status == 200, \
+        'PUT /maze returned %d, not 200' % status
+    assert data.current_room == next_room, \
+        'current_room is %s, not %s' % (data.current_room, next_room)

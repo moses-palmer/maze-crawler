@@ -43,17 +43,23 @@ def _server_start():
     server = subprocess.Popen(args, env = env)
 
     # Wait for the socket to become available
+    cookies = ''
     while True:
         assert server.poll() is None
         try:
             connection = HTTPConnection(_HOST, port)
             connection.request('GET', '/')
-            connection.getresponse().close()
+            r = connection.getresponse()
+            for h, v in r.getheaders():
+                if h == 'set-cookie':
+                    cookies = v
+                    break
+            r.close()
             break
         except (CannotSendRequest, socket.error):
             time.sleep(0.1)
 
-    _servers.append((server, connection))
+    _servers.append((server, connection, cookies))
 
 def _server_stop():
     """
@@ -64,28 +70,29 @@ def _server_stop():
     """
     global _servers
 
-    server, connection = _servers.pop()
+    server, connection, cookies = _servers.pop()
     assert server.poll() is None, \
         'The current server is not running'
     connection.close()
     server.kill()
 
 
-def _get_connection():
+def _get_connection_data():
     """
-    Returns a connection to the most currently started server.
+    Returns a connection to the most currently started server, and the headers
+    that should be sent along.
 
-    @return a connection to the most currently started server
+    The headers include cookies set by the first request to the server.
+
+    @return the tuple (connection, headers)
     @raise AssertionError if the most currently started server is not running
-    @raise IndexError if no server is running
     """
-    global _servers
-
-    server, connection = _servers[-1]
+    server, connection, cookies = _servers[-1]
     assert server.poll() is None, \
         'The current server is not running'
 
-    return connection
+    return connection, {
+        'Cookie': cookies}
 
 
 def _get_response_data(response):

@@ -35,13 +35,18 @@ class MazeWalker(object):
         def __int__(self):
             return int(self._d)
 
-    def __init__(self, host = 'localhost', port = 8080):
+    def __init__(self, host = 'localhost', port = 8080, width = 20,
+            height = 15):
         """
         Initialises a new maze walker.
 
         @param host, port
             The host and port for the maze crawler server.
+        @param width, height
+            The dimensions of the maze.
         @raise AssertionError if no cookies were retrieved from the server
+        @raise ValueError if the size of the maze created on the server was
+            different from the requested size
         """
         self.host, self.port = host, port
 
@@ -60,6 +65,16 @@ class MazeWalker(object):
 
         assert self.cookies, \
             'No session ID was saved'
+
+        # Initialise a new maze and get its properties
+        data = self._post('/maze', dict(
+            width = width,
+            height = height))
+        if data.width != width or data.height != height:
+            raise ValueError('Failed to create a maze with dimensions %s' % (
+                str((width, height))))
+        self.width = data.width
+        self.height = data.height
 
     def _req(self, method, path, data = None):
         """

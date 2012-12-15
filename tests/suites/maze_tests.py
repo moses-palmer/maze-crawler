@@ -1,3 +1,5 @@
+import math
+
 from ._util import webtest, get, put, post, delete, maze_reset
 
 @webtest
@@ -237,3 +239,52 @@ def maze_delete1():
 
     assert status == 204, \
         'GET /maze returned %d instead of 204' % status
+
+
+def maze_walk():
+    """Walks the way from start_room to the top right corner of the maze and
+    verifies all results along the way"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    current_room = data.current_room
+    direction = None
+    previous_room = None
+    target_position = dict(
+        x = data.width - 1,
+        y = data.height - 1)
+
+    while True:
+        status, data = get('/maze/%d' % current_room)
+        assert status == 200, \
+            'GET /maze/%d returned %d, not 200' % (current_room, status)
+        assert data.identifier == current_room, \
+            'current_room is %d, not %s' % (data.current_room, next_room)
+
+        if data.position == target_position:
+            break
+
+        if not direction:
+            direction, next_room = next((w.span.start, w.target)
+                for w in data.walls
+                if w.target)
+        else:
+            directions = sorted(
+                ((w.span.start, w.target) for w in data.walls if w.target),
+                key = lambda (a, i):
+                    a - direction if a > direction
+                    else 2 * math.pi + a - direction)
+            direction, next_room = directions[
+                0 if directions[0][1] != previous_room else -1]
+            previous_room = current_room
+
+        original_data = data
+        status, data = put('/maze', dict(
+            current_room = next_room))
+        assert status == 200, \
+            'PUT /maze returned %d for %d => %d, current room = %s' % (
+                status, current_room, next_room, str(original_data))
+        assert data.current_room == next_room, \
+            'current_room is %d, not %d' % (data.current_room, next_room)
+        current_room = next_room

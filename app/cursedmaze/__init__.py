@@ -1,4 +1,5 @@
 import json
+import math
 import sys
 
 if sys.version_info.major < 3:
@@ -81,6 +82,22 @@ class MazeWalker(object):
             for j in range(self.height)]
         self.mapping = {}
 
+        # Retrieve the current room
+        self.current_room = data.current_room
+
+    @property
+    def current_room(self):
+        """The identifier of the current room"""
+        return self._current_room
+
+    @current_room.setter
+    def current_room(self, value):
+        """Sets the current room identifier"""
+        self._put('/maze', dict(
+            current_room = value))
+        self._current_room = value
+        self._update_cache(self._current_room)
+
     def __del__(self):
         # Delete the session on the server
         if hasattr(self, 'connection') and hasattr(self, 'cookies'):
@@ -90,7 +107,7 @@ class MazeWalker(object):
                 pass
 
     def __getitem__(self, i):
-        if isinstance(i, int):
+        if i in self.mapping:
             return self[self.mapping[i]]
 
         if isinstance(i, tuple) and len(i) == 2:
@@ -100,6 +117,46 @@ class MazeWalker(object):
             return self.rooms[i[1]][i[0]]
 
         raise KeyError(i)
+
+    def _update_cache(self, identifier, add_neighbors = True):
+        """
+        Retrieves the specified room from the server and updates the cache.
+
+        @param identifier
+            The identifier of the room.
+        @param add_neighbors
+            Whether to also request neighbouring rooms. If this is True, every
+            immediately reachable neighbour is also retrieved.
+        """
+        def span_to_direction(span):
+            """
+            Transforms a span expressed as an angle pair to a direction vector.
+            """
+            x = math.cos(span.start) + math.cos(span.end)
+            y = math.sin(span.start) + math.sin(span.end)
+            h = math.sqrt(x**2 + y**2)
+            ix, iy = int(x / h), int(y / h)
+            if abs(ix) == abs(iy):
+                raise ValueError('Angles %d, %d yield invalid direction %s' % (
+                    int(span.start * 360), int(span.end * 360), str((ix, iy))))
+            return (ix, iy)
+
+        # Get the current room
+        data = self._get('/maze/%s' % identifier)
+        self.mapping[identifier] = (
+            int(data.position.x),
+            int(data.position.y))
+        self.rooms[data.position.y][data.position.x] = (
+            (
+                int(identifier),
+                tuple((int(w.target), span_to_direction(w.span))
+                    for w in data.walls if w.target)))
+
+        # Update the neighbour rooms
+        if add_neighbors:
+            for w in data.walls:
+                if w.target:
+                    self._update_cache(int(w.target), add_neighbors = False)
 
     def _req(self, method, path, data = None):
         """

@@ -6,9 +6,16 @@ import sys
 
 from cursedmaze import MazeWalker
 
+# The size of a room in characters described as (width, height)
+ROOM_SIZE = (4, 3)
+
 
 def wrapped_main(win):
-    pass
+    # Create a maze walker
+    my, mx = win.getmaxyx()
+    walker = MazeWalker(
+        width = mx // ROOM_SIZE[0],
+        height = my // ROOM_SIZE[1])
 
 
 def main():

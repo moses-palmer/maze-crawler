@@ -84,3 +84,49 @@ def MazeWalker_current_room2():
 
         with assert_exception(AssertionError):
             mw.current_room = unreachable_room
+
+
+@webtest
+def MazeWalker_position0():
+    """Setting MazeWalker.position to an invalid value"""
+    mw = MazeWalker()
+
+    with assert_exception(ValueError):
+        mw.position = (-1, -1)
+
+
+@webtest
+def MazeWalker_position1():
+    """Setting MazeWalker.position to an immediately reachable room"""
+    mw = MazeWalker()
+
+    start_room = mw.current_room
+    next_room = mw[mw.current_room][1][0][0]
+    mw.position = mw.mapping[next_room]
+
+
+@webtest
+def MazeWalker_position2():
+    """Setting MazeWalker.position to an unknown room"""
+    mw = MazeWalker()
+
+    start_position = mw.position
+
+    with assert_exception(ValueError):
+        mw.position = (start_position[0], start_position[1] + 2)
+
+
+@webtest
+def MazeWalker_position3():
+    """Setting MazeWalker.position to an unreachable room"""
+    mw = MazeWalker()
+
+    start_room = mw.current_room
+    mw.current_room = mw[mw.current_room][1][0][0]
+    for unreachable_room_id in (w[0] for w in mw[mw.current_room][1]
+            if w[0] != start_room):
+        unreachable_room = mw.mapping[unreachable_room_id]
+        mw.current_room = start_room
+
+        with assert_exception(AssertionError):
+            mw.position = unreachable_room

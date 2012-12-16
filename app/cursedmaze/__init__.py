@@ -98,6 +98,22 @@ class MazeWalker(object):
         self._current_room = value
         self._update_cache(self._current_room)
 
+    @property
+    def position(self):
+        """The position of the current room"""
+        return self.mapping[self.current_room]
+
+    @position.setter
+    def position(self, value):
+        """Sets the current room position"""
+        if not isinstance(value, tuple) or not len(value) == 2:
+            raise ValueError('%s is not a valid position' % str(value))
+
+        room = self.rooms[value[1]][value[0]]
+        if room is None:
+            raise ValueError('Room at %s is unknown' % str(value))
+        self.current_room, walls = room
+
     def __del__(self):
         # Delete the session on the server
         if hasattr(self, 'connection') and hasattr(self, 'cookies'):

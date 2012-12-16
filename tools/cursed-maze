@@ -21,6 +21,9 @@ def paint(win, walker, hrange, vrange):
     """
     Paints all known rooms of a maze.
 
+    The current room and its neighbours are painted highlighted, and other rooms
+    with a less distinct colour.
+
     @param win
         The curses window to use.
     @param walker
@@ -44,6 +47,8 @@ def paint(win, walker, hrange, vrange):
             up = (0, 1) in doors
             right = (1, 0) in doors
             down = (0, -1) in doors
+
+            is_reachable = walker.is_reachable((x, y))
 
             # Iterate over all characters of the room
             for rx in range(ROOM_SIZE[0]):
@@ -81,12 +86,16 @@ def paint(win, walker, hrange, vrange):
                     win.addch(
                         my - ((y + 1) * ROOM_SIZE[1] - ry),
                         x * ROOM_SIZE[0] + rx,
-                        ' ',
-                        curses.A_REVERSE if filled else curses.A_NORMAL)
+                        ' ' if is_reachable else '#',
+                        (curses.A_REVERSE if filled else curses.A_NORMAL)
+                            | curses.color_pair(
+                                0 if is_reachable else 1))
 
 
 def wrapped_main(win):
     curses.curs_set(0)
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_WHITE, -1)
 
     # Create a maze walker
     my, mx = win.getmaxyx()

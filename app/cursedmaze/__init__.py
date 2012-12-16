@@ -76,6 +76,14 @@ class MazeWalker(object):
         self.width = data.width
         self.height = data.height
 
+    def __del__(self):
+        # Delete the session on the server
+        if hasattr(self, 'connection') and hasattr(self, 'cookies'):
+            try:
+                self._delete('/maze')
+            except:
+                pass
+
     def _req(self, method, path, data = None):
         """
         Performs a HTTP request to the server for path.

@@ -103,3 +103,14 @@ def maze_update():
         mazeutil.store(maze)
 
     return mazeutil.to_dict(maze)
+
+
+@app.delete('/maze')
+def maze_delete():
+    """
+    Deletes the current session.
+
+    @return 204
+    """
+    bottle.request.environ.get('beaker.session').delete()
+    return bottle.HTTPResponse(status = 204)

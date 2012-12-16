@@ -212,3 +212,28 @@ def maze_update5():
         'PUT /maze returned %d, not 200' % status
     assert data.current_room == next_room, \
         'current_room is %s, not %s' % (data.current_room, next_room)
+
+
+@webtest
+def maze_delete0():
+    """Test DELETE /maze for an uninitialised maze"""
+    status, data = delete('/maze')
+
+    assert status == 204, \
+        'DELETE /maze returned %d, not 204' % status
+
+
+@webtest
+def maze_delete1():
+    """Test DELETE /maze for an initialised maze"""
+    maze_reset()
+
+    status, data = delete('/maze')
+
+    assert status == 204, \
+        'DELETE /maze returned %d, not 204' % status
+
+    status, data = get('/maze')
+
+    assert status == 204, \
+        'GET /maze returned %d instead of 204' % status

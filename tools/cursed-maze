@@ -10,12 +10,93 @@ from cursedmaze import MazeWalker
 ROOM_SIZE = (4, 3)
 
 
+def paint(win, walker, hrange, vrange):
+    """
+    Paints all known rooms of a maze.
+
+    @param win
+        The curses window to use.
+    @param walker
+        The MazeWalker whose cached rooms to paint.
+    @param hrange, vrange
+        The horizontal and vertical ranges of the maze to paint.
+    """
+    my, mx = win.getmaxyx()
+
+    for x in hrange:
+        for y in vrange:
+            room = walker[(x, y)]
+
+            # Ignore unknown rooms
+            if not room:
+                continue
+
+            # Get the directions in which we have doors
+            doors = set(d[1] for d in room[1])
+            left = (-1, 0) in doors
+            up = (0, 1) in doors
+            right = (1, 0) in doors
+            down = (0, -1) in doors
+
+            # Iterate over all characters of the room
+            for rx in range(ROOM_SIZE[0]):
+                for ry in range(ROOM_SIZE[1]):
+                    if rx == 0:
+                        if ry == 0:
+                            # Top left corner
+                            filled = True
+                        elif ry == ROOM_SIZE[1] - 1:
+                            # Bottom left corner
+                            filled = True
+                        else:
+                            # Left wall
+                            filled = not left
+                    elif rx == ROOM_SIZE[0] - 1:
+                        if ry == 0:
+                            # Top right corner
+                            filled = True
+                        elif rx == ROOM_SIZE[0] - 1 and ry == ROOM_SIZE[1] - 1:
+                            # Bottom right corner
+                            filled = True
+                        else:
+                            # Right wall
+                            filled = not right
+                    elif ry == 0:
+                        # Top wall
+                        filled = not up
+                    elif ry == ROOM_SIZE[1] - 1:
+                        # Bottom wall
+                        filled = not down
+                    else:
+                        # Inside room
+                        filled = False
+
+                    win.addch(
+                        my - ((y + 1) * ROOM_SIZE[1] - ry),
+                        x * ROOM_SIZE[0] + rx,
+                        ' ',
+                        curses.A_REVERSE if filled else curses.A_NORMAL)
+
+
 def wrapped_main(win):
+    curses.curs_set(0)
+
     # Create a maze walker
     my, mx = win.getmaxyx()
     walker = MazeWalker(
         width = mx // ROOM_SIZE[0],
         height = my // ROOM_SIZE[1])
+
+    while True:
+        # Paint the maze
+        paint(win, walker, range(walker.width), range(walker.height))
+        win.refresh()
+
+        c = win.getch()
+
+        if c in (27, curses.KEY_EXIT):
+            # Escape pressed
+            break
 
 
 def main():

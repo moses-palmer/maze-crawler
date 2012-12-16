@@ -9,6 +9,13 @@ from cursedmaze import MazeWalker
 # The size of a room in characters described as (width, height)
 ROOM_SIZE = (4, 3)
 
+# The mapping from curses keys to directions
+DIRECTIONS = {
+    curses.KEY_LEFT: (-1, 0),
+    curses.KEY_UP: (0, 1),
+    curses.KEY_RIGHT: (1, 0),
+    curses.KEY_DOWN: (0, -1)}
+
 
 def paint(win, walker, hrange, vrange):
     """
@@ -87,9 +94,13 @@ def wrapped_main(win):
         width = mx // ROOM_SIZE[0],
         height = my // ROOM_SIZE[1])
 
+    position = tuple(int(position * room_size + room_size * 0.5)
+        for position, room_size in zip(walker.position, ROOM_SIZE))
+
     while True:
         # Paint the maze
         paint(win, walker, range(walker.width), range(walker.height))
+        win.addch(my - position[1] - 1, position[0], '#')
         win.refresh()
 
         c = win.getch()
@@ -97,6 +108,45 @@ def wrapped_main(win):
         if c in (27, curses.KEY_EXIT):
             # Escape pressed
             break
+
+        elif c in DIRECTIONS:
+            next_position = tuple(position + direction
+                for position, direction in zip(position, DIRECTIONS[c]))
+            next_room = tuple(position // room_size
+                for position, room_size in zip(next_position, ROOM_SIZE))
+
+            if next_room == walker.position:
+                # Walking inside a room
+                rx, ry = (position % room_size
+                    for position, room_size in zip(next_position, ROOM_SIZE))
+
+                # All corners have walls
+                if rx in (0, ROOM_SIZE[0] - 1) and ry in (0, ROOM_SIZE[1] - 1):
+                    continue
+
+                if rx == 0 and not any(w[1] == (-1, 0)
+                        for w in walker[walker.current_room][1]):
+                    continue
+                elif rx == ROOM_SIZE[0] - 1 and not any(w[1] == (1, 0)
+                        for w in walker[walker.current_room][1]):
+                    continue
+
+                if ry == 0 and not any(w[1] == (0, -1)
+                        for w in walker[walker.current_room][1]):
+                    continue
+                elif ry == ROOM_SIZE[1] - 1 and not any(w[1] == (0, 1)
+                        for w in walker[walker.current_room][1]):
+                    continue
+
+            else:
+                # Walking between rooms
+                try:
+                    walker.position = next_room
+                except:
+                    curses.flash()
+                    continue
+
+            position = next_position
 
 
 def main():

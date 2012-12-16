@@ -76,6 +76,11 @@ class MazeWalker(object):
         self.width = data.width
         self.height = data.height
 
+        # Create a cache for rooms, and a mapping from ID to position
+        self.rooms = [list(None for i in range(self.width))
+            for j in range(self.height)]
+        self.mapping = {}
+
     def __del__(self):
         # Delete the session on the server
         if hasattr(self, 'connection') and hasattr(self, 'cookies'):
@@ -83,6 +88,18 @@ class MazeWalker(object):
                 self._delete('/maze')
             except:
                 pass
+
+    def __getitem__(self, i):
+        if isinstance(i, int):
+            return self[self.mapping[i]]
+
+        if isinstance(i, tuple) and len(i) == 2:
+            x, y = i
+            if x < 0 or x >= self.width or y < 0 or y >= self.height:
+                raise IndexError()
+            return self.rooms[i[1]][i[0]]
+
+        raise KeyError(i)
 
     def _req(self, method, path, data = None):
         """

@@ -1,12 +1,18 @@
 #!/usr/bin/env python
 
+import curses
+import curses.wrapper
 import sys
 
 from cursedmaze import MazeWalker
 
 
-def main():
+def wrapped_main(win):
     pass
+
+
+def main():
+    curses.wrapper(wrapped_main)
 
 
 if __name__ == '__main__':

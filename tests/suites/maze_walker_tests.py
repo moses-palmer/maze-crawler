@@ -130,3 +130,36 @@ def MazeWalker_position3():
 
         with assert_exception(AssertionError):
             mw.position = unreachable_room
+
+
+@webtest
+def MazeWalker_is_reachable0():
+    """MazeWalker.is_reachable for the current room"""
+    mw = MazeWalker()
+
+    assert mw.is_reachable(mw.position), \
+        'The current room is not reachable'
+
+
+@webtest
+def MazeWalker_is_reachable1():
+    """MazeWalker.is_reachable for neighbouring rooms"""
+    mw = MazeWalker()
+
+    start_room = mw.current_room
+    mw.current_room = mw[mw.current_room][1][0][0]
+
+    for direction in ((-1, 0), (0, 1), (1, 0), (0, -1)):
+        old_pos = mw.position
+        next_pos = tuple(p + d
+            for p, d in zip(old_pos, direction))
+        try:
+            mw.position = next_pos
+            is_reachable = True
+        except (AssertionError, ValueError):
+            is_reachable = False
+
+        mw.position = old_pos
+        assert mw.is_reachable(next_pos) == is_reachable, \
+            'MazeWalker.is_reachable returned %s, but the room could %s ' \
+            'moved to' % (not is_reachable, 'be' if is_reachable else 'not be')

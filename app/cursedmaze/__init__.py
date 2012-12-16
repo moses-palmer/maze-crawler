@@ -114,6 +114,22 @@ class MazeWalker(object):
             raise ValueError('Room at %s is unknown' % str(value))
         self.current_room, walls = room
 
+    def is_reachable(self, room_position):
+        """
+        Returns whether a room is immediately reachable from the current room.
+
+        @param room_position
+            The position opf the room.
+        @return whether the room is reachable
+        """
+        if room_position == self.position:
+            # The current room is reachable
+            return True
+        else:
+            return any(room_position == tuple(p + d
+                    for p, d in zip(self.position, w[1]))
+                for w in self[self.position][1])
+
     def __del__(self):
         # Delete the session on the server
         if hasattr(self, 'connection') and hasattr(self, 'cookies'):

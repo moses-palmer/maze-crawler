@@ -90,7 +90,7 @@ def to_dict(maze):
         current_room = maze.current_room)
 
 
-def room_to_dict(maze, room_pos):
+def room_to_dict(maze, room_pos, neighbor_details = False):
     """
     Converts a room to a dict that can be passed as return value for
     /maze/<room_identifier>.
@@ -110,7 +110,8 @@ def room_to_dict(maze, room_pos):
             x = maze.get_center(room_pos)[0],
             y = maze.get_center(room_pos)[1]),
         walls = [dict(
-            target = maze[maze.walk(w)].identifier
+            target = (maze[maze.walk(w)].identifier if not neighbor_details
+                    else room_to_dict(maze, maze.walk(w)))
                 if w in maze[room_pos] else None,
             span = dict(
                 start = w.span[0],

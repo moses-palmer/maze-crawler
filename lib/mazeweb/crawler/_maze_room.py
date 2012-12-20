@@ -32,3 +32,24 @@ def maze_get_room(room_identifier):
     return mazeutil.room_to_dict(
         maze,
         mazeutil.get_adjacent(maze, room_identifier))
+
+
+@app.get('/maze/<room_identifier:int>/details')
+def maze_get_room_details(room_identifier):
+    """
+    Retrieves a thorough description of a room.
+
+    This will behave exactly like GET /maze/<room_identifier> with the following
+    exceptions:
+
+    @response.walls
+        A list containing dict(span = dict(start = ..., end = ...),
+        target = room). If the wall does not have a wall, target is None. The
+        target values will be on the same format as GET /maze/<room_identifier>.
+
+    @see maze_get_room
+    """
+    maze = mazeutil.load()
+    return mazeutil.room_to_dict(
+        maze,
+        mazeutil.get_adjacent(maze, room_identifier), True)

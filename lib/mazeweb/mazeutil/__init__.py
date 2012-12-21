@@ -6,6 +6,8 @@ from maze.tri import TriMaze
 from maze.hex import HexMaze
 from maze.randomized_prim import initialize
 
+from numeric import randuniq
+
 MAZE_CLASSES = dict((len(mc.Wall.WALLS), mc) for mc in (
     TriMaze,
     Maze,
@@ -28,6 +30,14 @@ def new(width = 30, height = 20, walls = 4, **kwargs):
         raise ValueError('invalid maze dimensions')
     maze = MAZE_CLASSES[walls](width, height)
     initialize(maze, lambda max: random.randint(0, max - 1))
+
+    maze.room_mapping = {}
+    for room_pos, identifier in zip(
+            maze.room_positions,
+            randuniq(width * height)):
+        maze[room_pos].identifier = identifier
+        maze.room_mapping[identifier] = room_pos
+
     return (maze, kwargs)
 
 
@@ -71,4 +81,5 @@ def to_dict(maze):
     return dict(
         width = maze.width,
         height = maze.height,
-        walls = len(maze.Wall.WALLS))
+        walls = len(maze.Wall.WALLS),
+        start_room = maze[(0, 0)].identifier)

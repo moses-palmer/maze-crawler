@@ -15,6 +15,8 @@ def maze_get():
         The height of the current maze.
     @response.walls
         The number of walls for the current maze.
+    @response.start_room
+        The identifier of the room at (0, 0).
 
     @return 204 if no maze has been initialised and 200 otherwise
     """

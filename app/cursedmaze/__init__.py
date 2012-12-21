@@ -174,21 +174,29 @@ class MazeWalker(object):
             return (ix, iy)
 
         # Get the current room
-        data = self._get('/maze/%s' % identifier)
+        data = self._get('/maze/%s/details' % identifier)
         self.mapping[identifier] = (
             int(data.position.x),
             int(data.position.y))
         self.rooms[data.position.y][data.position.x] = (
             (
                 int(identifier),
-                tuple((int(w.target), span_to_direction(w.span))
+                tuple((int(w.target.identifier), span_to_direction(w.span))
                     for w in data.walls if w.target)))
 
         # Update the neighbour rooms
         if add_neighbors:
             for w in data.walls:
                 if w.target:
-                    self._update_cache(int(w.target), add_neighbors = False)
+                    self.mapping[int(w.target.identifier)] = (
+                        int(w.target.position.x),
+                        int(w.target.position.y))
+                    self.rooms[w.target.position.y][w.target.position.x] = (
+                        (
+                            int(w.target.identifier),
+                            tuple((int(wall.target),
+                                    span_to_direction(wall.span))
+                                for wall in w.target.walls if wall.target)))
 
     def _req(self, method, path, data = None):
         """

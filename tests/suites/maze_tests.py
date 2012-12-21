@@ -46,8 +46,9 @@ def maze_get3():
 
     status, data = get('/maze')
 
-    assert data.start_room == data.current_room, \
-        'start_room was %d, not %d' % (data.start_room, data.current_room)
+    assert data.start_room == data.current_room.identifier, \
+        'start_room was %d, not %d' % (
+            data.start_room, data.current_room.identifier)
 
 
 @webtest
@@ -140,7 +141,7 @@ def maze_update2():
     status, data = get('/maze')
 
     original_data = dict(
-        current_room = data.current_room)
+        current_room = data.current_room.identifier)
     status, data = put('/maze', original_data)
 
     assert status == 200, \
@@ -201,7 +202,7 @@ def maze_update5():
 
     status, data = get('/maze')
 
-    room_identifier = data.current_room
+    room_identifier = data.current_room.identifier
     status, data = get('/maze/%d' % room_identifier)
 
     next_room = next(wall.target for wall in data.walls if wall.target)
@@ -212,7 +213,7 @@ def maze_update5():
 
     assert status == 200, \
         'PUT /maze returned %d, not 200' % status
-    assert data.current_room == next_room, \
+    assert data.current_room.identifier == next_room, \
         'current_room is %s, not %s' % (data.current_room, next_room)
 
 

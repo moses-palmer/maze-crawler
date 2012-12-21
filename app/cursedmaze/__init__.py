@@ -83,7 +83,7 @@ class MazeWalker(object):
         self.mapping = {}
 
         # Retrieve the current room
-        self.current_room = data.current_room
+        self.current_room = data.current_room.identifier
 
     @property
     def current_room(self):

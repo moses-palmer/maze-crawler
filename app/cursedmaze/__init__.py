@@ -93,10 +93,10 @@ class MazeWalker(object):
     @current_room.setter
     def current_room(self, value):
         """Sets the current room identifier"""
-        self._put('/maze', dict(
+        maze = self._put('/maze', dict(
             current_room = value))
         self._current_room = value
-        self._update_cache(self._current_room)
+        self._update_cache(self._current_room, maze.current_room)
 
     @property
     def position(self):
@@ -150,7 +150,8 @@ class MazeWalker(object):
 
         raise KeyError(i)
 
-    def _update_cache(self, identifier, add_neighbors = True):
+    def _update_cache(self, identifier, add_neighbors = True,
+            current_room = None):
         """
         Retrieves the specified room from the server and updates the cache.
 
@@ -159,6 +160,10 @@ class MazeWalker(object):
         @param add_neighbors
             Whether to also request neighbouring rooms. If this is True, every
             immediately reachable neighbour is also retrieved.
+        @param current_room
+            A value to use as the current room instead of querying the server.
+            This must be compatible with the line representation of a room. If
+            this is None, the server will be queried.
         """
         def span_to_direction(span):
             """
@@ -174,7 +179,7 @@ class MazeWalker(object):
             return (ix, iy)
 
         # Get the current room
-        data = self._get('/maze/%s/details' % identifier)
+        data = current_room or self._get('/maze/%s/details' % identifier)
         self.mapping[identifier] = (
             int(data.position.x),
             int(data.position.y))

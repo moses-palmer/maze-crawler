@@ -14,7 +14,7 @@ MAZE_CLASSES = dict((len(mc.Wall.WALLS), mc) for mc in (
     HexMaze))
 
 
-def new(width = 30, height = 20, walls = 4, **kwargs):
+def new(width = 30, height = 20, walls = 4, seed = None, **kwargs):
     """
     Creates a new maze from keyword arguments.
 
@@ -29,12 +29,14 @@ def new(width = 30, height = 20, walls = 4, **kwargs):
     if width <= 0 or height <= 0:
         raise ValueError('invalid maze dimensions')
     maze = MAZE_CLASSES[walls](width, height)
-    initialize(maze, lambda max: random.randint(0, max - 1))
+    maze.random = randuniq(
+        None,
+        seed or random.randint(0, 1000000))
+    initialize(maze, lambda max: maze.random.next() % max)
 
     maze.room_mapping = {}
-    for room_pos, identifier in zip(
-            maze.room_positions,
-            randuniq(width * height)):
+    for room_pos in maze.room_positions:
+        identifier = maze.random.next()
         maze[room_pos].identifier = identifier
         maze.room_mapping[identifier] = room_pos
 

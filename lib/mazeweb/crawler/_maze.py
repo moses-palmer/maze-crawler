@@ -1,5 +1,5 @@
 import bottle
-from .. import mazeutil
+from .. import util
 
 from app import app
 
@@ -22,7 +22,7 @@ def maze_get():
 
     @return 204 if no maze has been initialised and 200 otherwise
     """
-    return mazeutil.to_dict(mazeutil.load())
+    return util.to_dict(util.load())
 
 
 @app.post('/maze')
@@ -43,14 +43,14 @@ def maze_reset():
     @return 400 if a parameter is invalid and 200 otherwise
     """
     try:
-        maze, remaining = mazeutil.new(**bottle.request.json)
+        maze, remaining = util.new(**bottle.request.json)
     except (KeyError, ValueError):
         raise bottle.HTTPError(status = 400)
     if remaining:
         print('Remaining arguments: ' + str(remaining))
 
-    mazeutil.store(maze)
-    return mazeutil.to_dict(maze)
+    util.store(maze)
+    return util.to_dict(maze)
 
 
 @app.put('/maze')
@@ -78,7 +78,7 @@ def maze_update():
         200 otherwise
     """
     try:
-        maze = mazeutil.load()
+        maze = util.load()
     except bottle.HTTPResponse as e:
         if e.status_code == 204:
             e.status = 400
@@ -95,14 +95,14 @@ def maze_update():
     except:
         return bottle.HTTPResponse(status = 400)
     if next_room_identifier != maze.current_room:
-        next_room = mazeutil.get_adjacent(maze, next_room_identifier)
+        next_room = util.get_adjacent(maze, next_room_identifier)
         maze.current_room = next_room_identifier
         store = True
 
     if store:
-        mazeutil.store(maze)
+        util.store(maze)
 
-    return mazeutil.to_dict(maze)
+    return util.to_dict(maze)
 
 
 @app.delete('/maze')

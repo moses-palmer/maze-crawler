@@ -1,4 +1,4 @@
-from mazeweb.mazeutil.numeric import randuniq
+from mazeweb.util.numeric import randuniq
 
 from .. import test, assert_exception
 

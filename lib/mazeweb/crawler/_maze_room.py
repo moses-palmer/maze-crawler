@@ -1,5 +1,5 @@
 import bottle
-from .. import mazeutil
+from .. import util
 
 from app import app
 
@@ -28,10 +28,10 @@ def maze_get_room(room_identifier):
         not immediately reachable, 404 if room_identifier is invalid and 200
         otherwise
     """
-    maze = mazeutil.load()
-    return mazeutil.room_to_dict(
+    maze = util.load()
+    return util.room_to_dict(
         maze,
-        mazeutil.get_adjacent(maze, room_identifier))
+        util.get_adjacent(maze, room_identifier))
 
 
 @app.get('/maze/<room_identifier:int>/details')
@@ -49,7 +49,7 @@ def maze_get_room_details(room_identifier):
 
     @see maze_get_room
     """
-    maze = mazeutil.load()
-    return mazeutil.room_to_dict(
+    maze = util.load()
+    return util.room_to_dict(
         maze,
-        mazeutil.get_adjacent(maze, room_identifier), True)
+        util.get_adjacent(maze, room_identifier), True)

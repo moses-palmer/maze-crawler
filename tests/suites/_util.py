@@ -23,7 +23,7 @@ _HOST = 'localhost'
 _BASE_PORT = 8080
 
 # The string that specifies the bottle descriptor for the server application
-_SERVER_APPLICATION = 'mazeweb.crawler:app'
+_SERVER_APPLICATION = 'mazeweb:app'
 
 def _server_start():
     """

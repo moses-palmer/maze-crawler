@@ -1,7 +1,5 @@
 import bottle
-from .. import util
-
-from app import app
+from .. import app, util
 
 
 @app.get('/maze/<room_identifier:int>')

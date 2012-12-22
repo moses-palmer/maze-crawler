@@ -2,6 +2,8 @@ import json
 import math
 import sys
 
+from mazeweb.util.data import JSONWrapper
+
 if sys.version_info.major < 3:
     from httplib import CannotSendRequest, HTTPConnection
 else:
@@ -9,33 +11,6 @@ else:
 
 
 class MazeWalker(object):
-    class JSONWrapper(object):
-        def __init__(self, d):
-            self._d = d
-            for aname in dir(d):
-                # Copy all magic methods from the value except those we define
-                if True and (\
-                        aname.startswith('__') and aname.endswith('__')
-                        and callable(getattr(d, aname))
-                        and not aname in (
-                            '__class__', # This is callable
-                            '__getattr__',
-                            '__getitem__',
-                            '__int__')):
-                    setattr(self, aname,
-                        lambda s, *args, **kwargs:
-                            getattr(s._d, aname)(s._d, *args, **kwargs))
-
-        def __getattr__(self, key):
-            v = self._d[key]
-            if hasattr(v, '__getitem__'):
-                return self.__class__(v)
-            else:
-                return v
-        __getitem__ = __getattr__
-        def __int__(self):
-            return int(self._d)
-
     def __init__(self, host = 'localhost', port = 8080, width = 20,
             height = 15):
         """
@@ -241,7 +216,7 @@ class MazeWalker(object):
                     or not data), \
                 'The server did not respond with JSON data'
 
-            return self.JSONWrapper(json.loads(data)) \
+            return JSONWrapper(json.loads(data)) \
                 if response.status == 200 else None
         finally:
             response.close()

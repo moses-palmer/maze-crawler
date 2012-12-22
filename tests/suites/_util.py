@@ -6,6 +6,7 @@ import sys
 import time
 
 from .. import test
+from mazeweb.util.data import JSONWrapper
 
 if sys.version_info.major < 3:
     from httplib import CannotSendRequest, HTTPConnection
@@ -108,40 +109,6 @@ def _get_response_data(response):
         The HTTP response as returned by HTTPConnection.getresponse().
     @return the response data
     """
-    class JSONWrapper(object):
-        def __init__(self, d):
-            self._d = d
-            for aname in dir(d):
-                # Copy all magic methods from the value except those we define
-                value = getattr(d, aname)
-                if callable(value) \
-                        and not aname in (
-                            '__class__',
-                            '__cmp__',
-                            '__getattr__',
-                            '__getitem__') \
-                        and aname.startswith('__') and aname.endswith('__'):
-                    setattr(self, aname,
-                        lambda *args, **kwargs:
-                            value(*args, **kwargs))
-
-        def __get__(self, instance, owner):
-            value = self._d
-            if isinstance(value, (dict, list)):
-                return self
-            else:
-                return value
-        def __cmp__(self, other):
-            print 'compared', self
-            return cmp(self._d, other)
-        def __getattr__(self, key):
-            value = self._d[key]
-            if isinstance(value, (dict, list)):
-                return JSONWrapper(value)
-            else:
-                return value
-        __getitem__ = __getattr__
-
     if response.getheader('Content-Type') == 'application/json':
         return JSONWrapper(json.loads(response.read()))
     else:

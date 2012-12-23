@@ -46,3 +46,34 @@ class JSONWrapper(object):
 
     def __str__(self):
         return str(self._d)
+
+
+class ConfigurationStore(JSONWrapper):
+    """
+    A ConfigurationStore is a JSONWrapper that also supports to be called.
+
+    The parameters when calling are described in __call__.
+    """
+    def __call__(self, path, default = None):
+        """
+        When calling a configuration store, a named configuration value is
+        retrieved, or a default value if no value is stored.
+
+        @param path
+            The path to the configuration value. This is a list of names
+            separated by '.'. The path is split on '.', and every part is used
+            as key recursively from the configuration root to find the result.
+        @param default
+            The value to return if a part does not exist.
+        @param TypeError if an item along the way does not support item['k']
+        """
+        v = self._d
+        for part in path.split('.'):
+            try:
+                v = v[part]
+            except KeyError:
+                return default
+        if isinstance(v, (list, dict)):
+            return ConfigurationStore(v)
+        else:
+            return v

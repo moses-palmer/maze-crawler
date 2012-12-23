@@ -1,5 +1,5 @@
 from mazeweb.util.numeric import randuniq
-from mazeweb.util.data import JSONWrapper
+from mazeweb.util.data import JSONWrapper, ConfigurationStore
 
 from .. import test, assert_exception
 
@@ -111,4 +111,29 @@ def JSONWrapper_getattr():
     assert w.a_list[2] == 'three', \
         'Access failed'
     assert w.a_list[3].key == 'next', \
+        'Access failed'
+
+
+@test
+def ConfigurationStore_call():
+    """Tests that calling a ConfigurationStore works"""
+    w = ConfigurationStore(dict(
+        a_boolean = True,
+        a_number = 42,
+        a_string = 'Some string',
+        a_dict = dict(
+            key = 'next',
+            value = 5,
+            another_dict = dict(
+                the = 'end'))))
+
+    assert w('a_boolean') == True, \
+        'Access failed'
+    assert w('a_number') == 42, \
+        'Access failed'
+    assert w('a_string') == 'Some string', \
+        'Access failed'
+    assert w('a_dict.key') == 'next', \
+        'Access failed'
+    assert w('a_dict.another_dict') == {'the': 'end'}, \
         'Access failed'

@@ -1,0 +1,32 @@
+#!/bin/sh
+
+case "$1" in
+--help)
+    cat <<EOF
+Usage: $(basename "$0") [--wait|--help|PIDFILE] <bottle arguments>...
+
+--wait Wait for the server to stop.
+--help Print this message and exit.
+
+PIDFILE is the name of the file to which to write the PID of the server process.
+
+Any arguments passed after --wait and PIDFILE are passed to bottle.
+EOF
+    exit
+    ;;
+
+--wait)
+    # Start the bottle server in the foreground
+    shift
+    python -m bottle $@ mazeweb:app
+    ;;
+
+*)
+    # Start the bottle server in the background
+    PID_FILE="$1"
+    shift
+    python -m bottle $@ mazeweb:app &
+    SERVER_PID=$!
+    echo "$SERVER_PID" > "$PID_FILE"
+    ;;
+esac

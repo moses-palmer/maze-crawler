@@ -94,7 +94,8 @@ def load():
 
             try:
                 value.load_configuration()
-                PLUGINS[value.__plugin_name__] = value
+                if value.CONFIGURATION('plugin.enabled', True) is True:
+                    PLUGINS[value.__plugin_name__] = value
             except ValueError as e:
                 pass
 

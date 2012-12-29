@@ -11,3 +11,12 @@ def PLUGINS_initialised():
         'Test1Plugin was not loaded'
     assert 'test2' in PLUGINS, \
         'Test2Plugin was not loaded'
+
+
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_enabled():
+    """Asserts that a disabled plugin is not loaded"""
+    assert not 'disabled' in PLUGINS, \
+        'DisabledPlugin was loaded'

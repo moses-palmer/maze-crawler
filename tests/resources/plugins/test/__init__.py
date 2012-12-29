@@ -5,3 +5,6 @@ class TestPlugin1(Plugin):
 
 class TestPlugin2(Plugin):
     __plugin_name__ = 'test2'
+
+class DisabledPlugin(Plugin):
+    __plugin_name__ = 'disabled'

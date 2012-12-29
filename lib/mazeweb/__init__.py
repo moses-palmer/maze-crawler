@@ -20,6 +20,8 @@ def get_session_cookie():
 
 
 import crawler
+import plugins
 
 
 app = SessionMiddleware(app, session_options)
+plugins.load()

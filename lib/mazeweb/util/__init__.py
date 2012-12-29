@@ -7,6 +7,7 @@ from maze.hex import HexMaze
 from maze.randomized_prim import initialize
 
 from numeric import randuniq
+from ..plugins import PLUGINS
 
 MAZE_CLASSES = dict((len(mc.Wall.WALLS), mc) for mc in (
     TriMaze,
@@ -29,6 +30,7 @@ def new(width = 30, height = 20, walls = 4, seed = None, **kwargs):
     if width <= 0 or height <= 0:
         raise ValueError('invalid maze dimensions')
     maze = MAZE_CLASSES[walls](width, height)
+    maze.plugins = dict((name, plugin()) for name, plugin in PLUGINS.items())
     maze.random = randuniq(
         None,
         seed or random.randint(0, 1000000))
@@ -86,6 +88,7 @@ def to_dict(maze):
         width = maze.width,
         height = maze.height,
         walls = len(maze.Wall.WALLS),
+        plugins = list(maze.plugins.keys()),
         start_room = maze[(0, 0)].identifier,
         current_room = room_to_dict(maze, maze.room_mapping[maze.current_room]))
 

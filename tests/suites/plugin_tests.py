@@ -1,6 +1,7 @@
 from mazeweb.plugins import load, unload, PLUGINS
 
 from .. import test
+from ._util import webtest, get, put, post, delete, maze_reset
 
 @test
 @test.before(load)
@@ -20,3 +21,17 @@ def plugin_enabled():
     """Asserts that a disabled plugin is not loaded"""
     assert not 'disabled' in PLUGINS, \
         'DisabledPlugin was loaded'
+
+
+@webtest
+def plugins_loaded():
+    """Tests that the plugins are loaded when mazeweb is started and that they
+    are passed with the maze description"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    assert 'test1' in data.plugins, \
+        'Test1Plugin was not loaded'
+    assert 'test2' in data.plugins, \
+        'Test2Plugin was not loaded'

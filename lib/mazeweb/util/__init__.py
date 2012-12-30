@@ -34,6 +34,9 @@ def new(width = 30, height = 20, walls = 4, seed = None, **kwargs):
     maze.random = randuniq(
         None,
         seed or random.randint(0, 1000000))
+
+    for plugin in maze.plugins.values():
+        plugin.pre_initialize(maze)
     initialize(maze, lambda max: maze.random.next() % max)
 
     maze.room_mapping = {}
@@ -43,6 +46,9 @@ def new(width = 30, height = 20, walls = 4, seed = None, **kwargs):
         maze.room_mapping[identifier] = room_pos
 
     maze.current_room = maze[(0, 0)].identifier
+
+    for plugin in maze.plugins.values():
+        plugin.post_initialize(maze)
 
     return (maze, kwargs)
 

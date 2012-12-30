@@ -17,8 +17,9 @@ def maze_room_get1():
     maze_reset()
 
     status, data = get('/maze')
+    start_position = data.current_room.position
 
-    room_identifier = data.start_room
+    room_identifier = data.current_room.identifier
     status, data = get('/maze/%d' % room_identifier)
 
     assert status == 200, \
@@ -28,11 +29,9 @@ def maze_room_get1():
         'The identifier for the start room was %s, not %d' % (
             str(data.identifier), room_identifier)
 
-    assert data.position == dict(
-        x = 0,
-        y = 0), \
-        'The position of the start room was %s, not {"x": 0, "y": 0}' % (
-            str(data.position))
+    assert data.position == start_position, \
+        'The position of the start room was %s, not %s' % (
+            str(data.position), str(start_position))
 
 
 @webtest
@@ -56,7 +55,7 @@ def maze_room_get3():
 
     status, data = get('/maze')
 
-    start_room = data.start_room
+    start_room = data.current_room.identifier
     status, data = get('/maze/%d' % start_room)
     assert status == 200, \
         'GET /maze/%d returned %d instead of 200' % (start_room, status)
@@ -82,7 +81,7 @@ def maze_room_get3():
 @webtest
 def maze_room_get_details0():
     """Test GET /maze/1/details with no maze initialised"""
-    status, data = get('/maze/1/details')
+    status, data = get('/maze/-1/details')
 
     assert status == 204, \
         'GET /maze/1/details returned %d instead of 204' % status
@@ -96,8 +95,9 @@ def maze_room_get_details1():
     maze_reset()
 
     status, data = get('/maze')
+    start_position = data.current_room.position
 
-    room_identifier = data.start_room
+    room_identifier = data.current_room.identifier
     status, data = get('/maze/%d/details' % room_identifier)
 
     assert status == 200, \
@@ -108,11 +108,9 @@ def maze_room_get_details1():
         'The identifier for the start room was %s, not %d' % (
             str(data.identifier), room_identifier)
 
-    assert data.position == dict(
-        x = 0,
-        y = 0), \
-        'The position of the start room was %s, not {"x": 0, "y": 0}' % (
-            str(data.position))
+    assert data.position == start_position, \
+        'The position of the start room was %s, not %s' % (
+            str(data.position), str(start_position))
 
 
 @webtest
@@ -136,7 +134,7 @@ def maze_room_get_details3():
 
     status, data = get('/maze')
 
-    start_room = data.start_room
+    start_room = data.current_room.identifier
     status, data = get('/maze/%d' % start_room)
     assert status == 200, \
         'GET /maze/%d returned %d instead of 200' % (start_room, status)
@@ -167,7 +165,7 @@ def maze_room_get_details4():
 
     status, data = get('/maze')
 
-    room_identifier = data.start_room
+    room_identifier = data.current_room.identifier
     status, data = get('/maze/%d/details' % room_identifier)
 
     assert status == 200, \

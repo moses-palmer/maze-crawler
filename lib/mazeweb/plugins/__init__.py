@@ -14,6 +14,26 @@ class Plugin(object):
     """
     A class describing the interface to plugin modules.
     """
+    def pre_initialize(self, maze):
+        """
+        Called when the maze has been initialised and all plugins loaded, but
+        before the maze is initialised.
+
+        @param maze
+            The newly created maze.
+        """
+        pass
+
+    def post_initialize(self, maze):
+        """
+        Called when the maze has been initialised and all plugins loaded, and
+        the maze has been initialised.
+
+        @param maze
+            The newly created maze.
+        """
+        pass
+
     def __init__(self):
         self.data_dir = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'),
             self.name)

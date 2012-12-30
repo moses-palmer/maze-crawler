@@ -8,3 +8,13 @@ class TestPlugin2(Plugin):
 
 class DisabledPlugin(Plugin):
     __plugin_name__ = 'disabled'
+
+class InitializePlugin(Plugin):
+    __plugin_name__ = 'initialize'
+
+    def pre_initialize(self, maze):
+        for wall in maze.walls((0, 0)):
+            maze[wall.room_pos][wall] = True
+
+    def post_initialize(self, maze):
+        maze.current_room = maze[(1, 1)].identifier

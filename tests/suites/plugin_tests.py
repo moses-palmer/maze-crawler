@@ -35,3 +35,16 @@ def plugins_loaded():
         'Test1Plugin was not loaded'
     assert 'test2' in data.plugins, \
         'Test2Plugin was not loaded'
+
+
+@webtest
+def plugins_initialized():
+    """Tests that the initialized callbacks are called"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    assert 'initialize' in data.plugins, \
+        'InitializePlugin was not loaded'
+    assert data.current_room.position == dict(x = 1, y = 1), \
+        'InitializePlugin did not set the current room'

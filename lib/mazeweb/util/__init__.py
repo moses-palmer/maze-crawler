@@ -118,7 +118,8 @@ def room_to_dict(maze, room_pos, neighbor_details = False):
                 if w in maze[room_pos] else None,
             span = dict(
                 start = w.span[0],
-                end = w.span[1])) for w in maze.walls(room_pos)])
+                end = w.span[1])) for w in maze.walls(room_pos)
+            if not maze.edge(w)])
 
 
 def get_adjacent(maze, room_identifier):

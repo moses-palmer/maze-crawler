@@ -12,9 +12,106 @@ ROOM_SIZE = (4, 3)
 # The mapping from curses keys to directions
 DIRECTIONS = {
     curses.KEY_LEFT: (-1, 0),
-    curses.KEY_UP: (0, 1),
+    curses.KEY_UP: (0, -1),
     curses.KEY_RIGHT: (1, 0),
-    curses.KEY_DOWN: (0, -1)}
+    curses.KEY_DOWN: (0, 1)}
+
+
+def screen_to_room(walker, position):
+    """
+    Converts a screen position to a room position.
+
+    @param walker
+        The MazeWalker for which to convert the screen position.
+    @param position
+        The screen position.
+    @return the tuple (room_pos, inner_pos), where inner_pos is the position
+        within the room
+    """
+    inner_pos = (
+        position[0] % ROOM_SIZE[0],
+        ROOM_SIZE[1] - position[1] % ROOM_SIZE[1] - 1)
+    room_pos = (
+        position[0] // ROOM_SIZE[0],
+        walker.height - position[1] // ROOM_SIZE[1] - 1)
+    return (room_pos, inner_pos)
+
+
+def room_to_screen(walker, room_pos, inner_pos = None):
+    """
+    Converts a room position to a screen position.
+
+    @param walker
+        The MazeWalker for which to convert the room position.
+    @param room_pos, inner_pos
+        The room position, and optionally the position within the room. If inner
+        pos is not specified, the centre of the room is used.
+    @return the screen position
+    """
+    if inner_pos is None:
+        inner_pos = tuple(d // 2 + (d & 1) for d in ROOM_SIZE)
+    return (
+        room_pos[0] * ROOM_SIZE[0] + inner_pos[0],
+        (walker.height - room_pos[1]) * ROOM_SIZE[1] - inner_pos[1])
+
+
+def is_blocked(walker, position):
+    """
+    Determines whether a screen position is blocked by a wall.
+
+    @param walker
+        The maze walker for which to determine whether the position is blocked.
+    @param position
+        The position to check. This is a character position: the room is
+        determined by checking against ROOM_SIZE.
+    @return whether the position is blocked, or None if the state is unknown
+    """
+    room_pos, (rx, ry) = screen_to_room(walker, position)
+
+    # We know nothing about unknown rooms or the outside of the maze
+    try:
+        room = walker[room_pos]
+        if room is None:
+            return None
+    except IndexError:
+        return None
+
+    # Get the directions in which we have doors
+    doors = set(d[1] for d in room[1])
+    left = (-1, 0) in doors
+    up = (0, 1) in doors
+    right = (1, 0) in doors
+    down = (0, -1) in doors
+
+    if rx == 0:
+        if ry == ROOM_SIZE[1] - 1:
+            # Top left corner
+            return True
+        elif ry == 0:
+            # Bottom left corner
+            return True
+        else:
+            # Left wall
+            return not left
+    elif rx == ROOM_SIZE[0] - 1:
+        if ry == ROOM_SIZE[1] - 1:
+            # Top right corner
+            return True
+        elif rx == ROOM_SIZE[0] - 1 and ry == 0:
+            # Bottom right corner
+            return True
+        else:
+            # Right wall
+            return not right
+    elif ry == ROOM_SIZE[1] - 1:
+        # Top wall
+        return not up
+    elif ry == 0:
+        # Bottom wall
+        return not down
+    else:
+        # Inside room
+        return False
 
 
 def paint(win, walker, hrange, vrange):
@@ -35,61 +132,28 @@ def paint(win, walker, hrange, vrange):
 
     for x in hrange:
         for y in vrange:
-            room = walker[(x, y)]
-
-            # Ignore unknown rooms
-            if not room:
+            if x < 0 or x >= mx - 1 or y < 0 or y >= my - 1:
                 continue
 
-            # Get the directions in which we have doors
-            doors = set(d[1] for d in room[1])
-            left = (-1, 0) in doors
-            up = (0, 1) in doors
-            right = (1, 0) in doors
-            down = (0, -1) in doors
+            blocked = is_blocked(walker, (x, y))
+            room_pos, inner_pos = screen_to_room(walker, (x, y))
+            reachable = walker.is_reachable(room_pos)
 
-            is_reachable = walker.is_reachable((x, y))
+            if blocked:
+                flags = curses.A_REVERSE
+                character = ' '
+            elif blocked is None:
+                flags = curses.A_NORMAL
+                character = '#'
+            else:
+                flags = curses.A_NORMAL
+                character = ' '
 
-            # Iterate over all characters of the room
-            for rx in range(ROOM_SIZE[0]):
-                for ry in range(ROOM_SIZE[1]):
-                    if rx == 0:
-                        if ry == 0:
-                            # Top left corner
-                            filled = True
-                        elif ry == ROOM_SIZE[1] - 1:
-                            # Bottom left corner
-                            filled = True
-                        else:
-                            # Left wall
-                            filled = not left
-                    elif rx == ROOM_SIZE[0] - 1:
-                        if ry == 0:
-                            # Top right corner
-                            filled = True
-                        elif rx == ROOM_SIZE[0] - 1 and ry == ROOM_SIZE[1] - 1:
-                            # Bottom right corner
-                            filled = True
-                        else:
-                            # Right wall
-                            filled = not right
-                    elif ry == 0:
-                        # Top wall
-                        filled = not up
-                    elif ry == ROOM_SIZE[1] - 1:
-                        # Bottom wall
-                        filled = not down
-                    else:
-                        # Inside room
-                        filled = False
-
-                    win.addch(
-                        my - ((y + 1) * ROOM_SIZE[1] - ry),
-                        x * ROOM_SIZE[0] + rx,
-                        ' ' if is_reachable else '#',
-                        (curses.A_REVERSE if filled else curses.A_NORMAL)
-                            | curses.color_pair(
-                                0 if is_reachable else 1))
+            win.addch(
+                y,
+                x,
+                character,
+                flags | curses.color_pair(0 if reachable else 1))
 
 
 def wrapped_main(win):
@@ -103,13 +167,14 @@ def wrapped_main(win):
         width = mx // ROOM_SIZE[0],
         height = my // ROOM_SIZE[1])
 
-    position = tuple(int(position * room_size + room_size * 0.5)
-        for position, room_size in zip(walker.position, ROOM_SIZE))
+    position = room_to_screen(walker, walker.position)
 
     while True:
         # Paint the maze
-        paint(win, walker, range(walker.width), range(walker.height))
-        win.addch(my - position[1] - 1, position[0], '#')
+        paint(win, walker,
+            range(mx),
+            range(my))
+        win.addch(position[1], position[0], '#')
         win.refresh()
 
         c = win.getch()
@@ -121,41 +186,19 @@ def wrapped_main(win):
         elif c in DIRECTIONS:
             next_position = tuple(position + direction
                 for position, direction in zip(position, DIRECTIONS[c]))
-            next_room = tuple(position // room_size
-                for position, room_size in zip(next_position, ROOM_SIZE))
+            next_room, inner_pos = screen_to_room(walker, next_position)
 
-            if next_room == walker.position:
-                # Walking inside a room
-                rx, ry = (position % room_size
-                    for position, room_size in zip(next_position, ROOM_SIZE))
+            blocked = is_blocked(walker, next_position)
+            if blocked is False:
+                if next_room != walker.position:
+                    # Walking between rooms
+                    try:
+                        walker.position = next_room
+                    except:
+                        curses.flash()
+                        continue
 
-                # All corners have walls
-                if rx in (0, ROOM_SIZE[0] - 1) and ry in (0, ROOM_SIZE[1] - 1):
-                    continue
-
-                if rx == 0 and not any(w[1] == (-1, 0)
-                        for w in walker[walker.current_room][1]):
-                    continue
-                elif rx == ROOM_SIZE[0] - 1 and not any(w[1] == (1, 0)
-                        for w in walker[walker.current_room][1]):
-                    continue
-
-                if ry == 0 and not any(w[1] == (0, -1)
-                        for w in walker[walker.current_room][1]):
-                    continue
-                elif ry == ROOM_SIZE[1] - 1 and not any(w[1] == (0, 1)
-                        for w in walker[walker.current_room][1]):
-                    continue
-
-            else:
-                # Walking between rooms
-                try:
-                    walker.position = next_room
-                except:
-                    curses.flash()
-                    continue
-
-            position = next_position
+                position = next_position
 
 
 def main():

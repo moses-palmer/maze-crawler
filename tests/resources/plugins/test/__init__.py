@@ -24,3 +24,9 @@ class GetMazePlugin(Plugin):
 
     def get_maze(self, maze, result):
         result['get_maze_plugin'] = 'was here'
+
+class UpdateMazePlugin(Plugin):
+    __plugin_name__ = 'update_maze'
+
+    def update_maze(self, maze, value, result):
+        result['update_maze_plugin'] = value.get('update_maze_plugin', None)

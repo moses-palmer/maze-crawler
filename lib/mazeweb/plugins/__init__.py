@@ -47,6 +47,23 @@ class Plugin(object):
         """
         pass
 
+    def update_maze(self, maze, value, result):
+        """
+        Called when the maze is being updated by the client and the wire
+        representation is generated.
+
+        This callback is called after the standard representation is generated,
+        and after get_maze has been called for the newly updated maze.
+
+        @param maze
+            The maze for which the wire representation is being generated.
+        @param value
+            The value sent by the client.
+        @param result
+            The dict representing the maze.
+        """
+        pass
+
     def __init__(self):
         self.data_dir = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'),
             self.name)

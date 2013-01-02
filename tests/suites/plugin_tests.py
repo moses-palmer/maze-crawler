@@ -59,3 +59,15 @@ def plugins_get_maze():
 
     assert data.get_maze_plugin == 'was here', \
         'GetMazePlugin did not update the maze'
+
+
+@webtest
+def plugins_update_maze():
+    """Tests that the update maze callbacks are called"""
+    maze_reset()
+
+    status, data = put('/maze', dict(
+        update_maze_plugin = 'activated'))
+
+    assert data.update_maze_plugin == 'activated', \
+        'GetMazePlugin did not update the maze'

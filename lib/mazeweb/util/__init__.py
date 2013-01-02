@@ -115,7 +115,7 @@ def room_to_dict(maze, room_pos, neighbor_details = False):
         The position of the room.
     @return a dict describing the room
     """
-    return dict(
+    result = dict(
         identifier = maze[room_pos].identifier,
         position = dict(
             x = room_pos[0],
@@ -131,6 +131,11 @@ def room_to_dict(maze, room_pos, neighbor_details = False):
                 start = w.span[0],
                 end = w.span[1])) for w in maze.walls(room_pos)
             if not maze.edge(w)])
+
+    for plugin in maze.plugins.values():
+        plugin.get_room(maze, room_pos, neighbor_details, result)
+
+    return result
 
 
 def get_adjacent(maze, room_identifier):

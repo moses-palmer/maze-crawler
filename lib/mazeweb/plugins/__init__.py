@@ -64,6 +64,25 @@ class Plugin(object):
         """
         pass
 
+    def get_room(self, maze, room_pos, neighbor_details, result):
+        """
+        Called when the wire representation of a room is generated.
+
+        This callback is called after the standard representation is generated.
+
+        @param maze
+            The maze for which the wire representation is being generated.
+        @param room_pos
+            The position of the room.
+        @param neighbor_details
+            Whether the client has requested neighbour details. This is merely
+            an informational parameter; this callback will be called for the
+            neighbouring rooms as well.
+        @param result
+            The dict representing the room.
+        """
+        pass
+
     def __init__(self):
         self.data_dir = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'),
             self.name)

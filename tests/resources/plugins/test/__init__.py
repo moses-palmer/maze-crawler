@@ -30,3 +30,11 @@ class UpdateMazePlugin(Plugin):
 
     def update_maze(self, maze, value, result):
         result['update_maze_plugin'] = value.get('update_maze_plugin', None)
+
+class GetRoomPlugin(Plugin):
+    __plugin_name__ = 'get_room'
+
+    def get_room(self, maze, room_pos, neighbor_details, result):
+        result['get_room_plugin'] = dict(
+            room_pos = dict((c, rp) for c, rp in zip('xy', room_pos)),
+            neighbor_details = neighbor_details)

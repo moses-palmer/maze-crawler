@@ -18,3 +18,9 @@ class InitializePlugin(Plugin):
 
     def post_initialize(self, maze):
         maze.current_room = maze[(1, 1)].identifier
+
+class GetMazePlugin(Plugin):
+    __plugin_name__ = 'get_maze'
+
+    def get_maze(self, maze, result):
+        result['get_maze_plugin'] = 'was here'

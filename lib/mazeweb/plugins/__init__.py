@@ -34,6 +34,19 @@ class Plugin(object):
         """
         pass
 
+    def get_maze(self, maze, result):
+        """
+        Called when the wire representation of the maze is generated.
+
+        This callback is called after the standard representation is generated.
+
+        @param maze
+            The maze for which the wire representation is being generated.
+        @param result
+            The dict representing the maze.
+        """
+        pass
+
     def __init__(self):
         self.data_dir = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'),
             self.name)

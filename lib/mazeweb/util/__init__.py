@@ -90,13 +90,18 @@ def to_dict(maze):
         The maze to convert to a dict.
     @return a dict describing the maze
     """
-    return dict(
+    result = dict(
         width = maze.width,
         height = maze.height,
         walls = len(maze.Wall.WALLS),
         plugins = list(maze.plugins.keys()),
         start_room = maze[(0, 0)].identifier,
         current_room = room_to_dict(maze, maze.room_mapping[maze.current_room]))
+
+    for plugin in maze.plugins.values():
+        plugin.get_maze(maze, result)
+
+    return result
 
 
 def room_to_dict(maze, room_pos, neighbor_details = False):

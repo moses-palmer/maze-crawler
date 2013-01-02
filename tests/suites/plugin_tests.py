@@ -48,3 +48,14 @@ def plugins_initialized():
         'InitializePlugin was not loaded'
     assert data.current_room.position == dict(x = 1, y = 1), \
         'InitializePlugin did not set the current room'
+
+
+@webtest
+def plugins_get_maze():
+    """Tests that the get maze callbacks are called"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    assert data.get_maze_plugin == 'was here', \
+        'GetMazePlugin did not update the maze'

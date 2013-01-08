@@ -93,6 +93,11 @@ class Plugin(object):
         return self.__plugin_name__
 
     @property
+    def dependencies(self):
+        """The names of the plugins on which this plugin depends"""
+        return getattr(self, '__plugin_dependencies__', [])
+
+    @property
     def configuration(self):
         """The plugin configuration"""
         return self.CONFIGURATION
@@ -151,6 +156,7 @@ def load():
 
         # Import the package and load all plugins
         m = importlib.import_module('.' + name, __package__)
+        all_plugins = {}
         for name in dir(m):
             value = getattr(m, name)
 
@@ -164,9 +170,23 @@ def load():
             try:
                 value.load_configuration()
                 if value.CONFIGURATION('plugin.enabled', True) is True:
-                    PLUGINS[value.__plugin_name__] = value
+                    if not hasattr(value, '__plugin_dependencies__'):
+                        PLUGINS[value.__plugin_name__] = value
+                    else:
+                        all_plugins[value.__plugin_name__] = value
             except ValueError as e:
                 pass
+
+        # Load all plugins with dependencies
+        continue_loading = bool(all_plugins)
+        while continue_loading:
+            continue_loading = False
+            for plugin in all_plugins.keys():
+                if all(d in PLUGINS
+                        for d in all_plugins[plugin].__plugin_dependencies__):
+                    PLUGINS[plugin] = all_plugins[plugin]
+                    del all_plugins[plugin]
+                    continue_loading = True
 
 
 def unload():

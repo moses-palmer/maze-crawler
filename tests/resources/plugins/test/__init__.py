@@ -38,3 +38,23 @@ class GetRoomPlugin(Plugin):
         result['get_room_plugin'] = dict(
             room_pos = dict((c, rp) for c, rp in zip('xy', room_pos)),
             neighbor_details = neighbor_details)
+
+class DependsPlugin1(Plugin):
+    __plugin_name__ = 'depends-1'
+    __plugin_dependencies__ = ['test1']
+
+class DependsPlugin2(Plugin):
+    __plugin_name__ = 'depends-2'
+    __plugin_dependencies__ = ['test1', 'test2']
+
+class DependsPlugin3(Plugin):
+    __plugin_name__ = 'depends-3'
+    __plugin_dependencies__ = ['test1', 'depends-2']
+
+class DependsPlugin4(Plugin):
+    __plugin_name__ = 'depends-4'
+    __plugin_dependencies__ = ['test1', 'depends-2', 'depends-3']
+
+class DependsPlugin5(Plugin):
+    __plugin_name__ = 'depends-5'
+    __plugin_dependencies__ = ['disabled', 'depends-2', 'depends-3']

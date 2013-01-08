@@ -23,6 +23,46 @@ def plugin_enabled():
         'DisabledPlugin was loaded'
 
 
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_dependencies0():
+    """Asserts that a plugin with a dependency is loaded"""
+    assert 'depends-1' in PLUGINS, \
+        'DependsPlugin1 was not loaded'
+
+
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_dependencies1():
+    """Asserts that a plugin with multiple dependencies is loaded"""
+    assert 'depends-2' in PLUGINS, \
+        'DependsPlugin2 was not loaded'
+
+
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_dependencies2():
+    """Asserts that a plugin with multiple dependencies on plugins with
+    dependencies is loaded"""
+    assert 'depends-3' in PLUGINS, \
+        'DependsPlugin3 was not loaded'
+    assert 'depends-4' in PLUGINS, \
+        'DependsPlugin4 was not loaded'
+
+
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_dependencies3():
+    """Asserts that a plugin with dependencies on a disabled plugin is not
+    loaded"""
+    assert not 'depends-5' in PLUGINS, \
+        'DependsPlugin5 was loaded'
+
+
 @webtest
 def plugins_loaded():
     """Tests that the plugins are loaded when mazeweb is started and that they

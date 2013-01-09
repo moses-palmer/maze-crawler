@@ -63,6 +63,46 @@ def plugin_dependencies3():
         'DependsPlugin5 was loaded'
 
 
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_conflicts0():
+    """Asserts that a plugin that conflicts with a loaded plugin is not
+    loaded"""
+    assert not 'conflicts-1' in PLUGINS, \
+        'ConflictsPlugin1 was loaded'
+
+
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_conflicts1():
+    """Asserts that a plugin that conflicts with a plugin that is not loaded is
+    loaded"""
+    assert 'conflicts-2' in PLUGINS, \
+        'ConflictsPlugin2 was loaded'
+
+
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_conflicts2():
+    """Asserts that a plugins that depends on a plugin that conflicts with a
+    loaded plugin is not loaded"""
+    assert not 'conflicts-3' in PLUGINS, \
+        'ConflictsPlugin3 was loaded'
+
+
+@test
+@test.before(load)
+@test.after(unload)
+def plugin_conflicts3():
+    """Asserts that a plugins that depends on a plugin that is unloaded due to
+    dependency on a plugin that conflicts with a loaded plugin is not loaded"""
+    assert not 'conflicts-4' in PLUGINS, \
+        'ConflictsPlugin4 was loaded'
+
+
 @webtest
 def plugins_loaded():
     """Tests that the plugins are loaded when mazeweb is started and that they

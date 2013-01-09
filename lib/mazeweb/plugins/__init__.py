@@ -98,6 +98,11 @@ class Plugin(object):
         return getattr(self, '__plugin_dependencies__', [])
 
     @property
+    def conflicts(self):
+        """The names of the plugins on which this plugin has conflicts"""
+        return getattr(self, '__plugin_conflicts__', [])
+
+    @property
     def configuration(self):
         """The plugin configuration"""
         return self.CONFIGURATION
@@ -187,6 +192,24 @@ def load():
                     PLUGINS[plugin] = all_plugins[plugin]
                     del all_plugins[plugin]
                     continue_loading = True
+
+        # Unload plugins with conflicts
+        continue_unloading = False
+        for plugin in PLUGINS.keys():
+            conflicts = getattr(PLUGINS[plugin], '__plugin_conflicts__', [])
+            if any(c in PLUGINS for c in conflicts):
+                del PLUGINS[plugin]
+                continue_unloading = True
+
+        # Unload plugins depending on conflicted plugins
+        while continue_unloading:
+            continue_unloading = False
+            for plugin in PLUGINS.keys():
+                dependencies = getattr(PLUGINS[plugin],
+                    '__plugin_dependencies__', [])
+                if not all(d in PLUGINS for d in dependencies):
+                    del PLUGINS[plugin]
+                    continue_unloading = True
 
 
 def unload():

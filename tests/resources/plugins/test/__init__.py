@@ -58,3 +58,19 @@ class DependsPlugin4(Plugin):
 class DependsPlugin5(Plugin):
     __plugin_name__ = 'depends-5'
     __plugin_dependencies__ = ['disabled', 'depends-2', 'depends-3']
+
+class ConflictsPlugin1(Plugin):
+    __plugin_name__ = 'conflicts-1'
+    __plugin_conflicts__ = ['test1']
+
+class ConflictsPlugin2(Plugin):
+    __plugin_name__ = 'conflicts-2'
+    __plugin_conflicts__ = ['disabled']
+
+class ConflictsPlugin3(Plugin):
+    __plugin_name__ = 'conflicts-3'
+    __plugin_dependencies__ = ['conflicts-1']
+
+class ConflictsPlugin4(Plugin):
+    __plugin_name__ = 'conflicts-4'
+    __plugin_dependencies__ = ['conflicts-3']

@@ -99,7 +99,12 @@ def maze_update():
     if store:
         util.store(maze)
 
-    return util.to_dict(maze)
+    result = util.to_dict(maze)
+
+    for plugin in maze.plugins.values():
+        plugin.update_maze(maze, bottle.request.json, result)
+
+    return result
 
 
 @app.delete('/maze')

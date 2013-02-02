@@ -39,19 +39,6 @@ def maze_get2():
 
 
 @webtest
-def maze_get3():
-    """Test GET /maze to verify that start_room is set to current_room after
-    reset"""
-    maze_reset()
-
-    status, data = get('/maze')
-
-    assert data.start_room == data.current_room.identifier, \
-        'start_room was %d, not %d' % (
-            data.start_room, data.current_room.identifier)
-
-
-@webtest
 def maze_reset0():
     """Test POST /maze with an empty body"""
     maze_reset()
@@ -169,7 +156,7 @@ def maze_update4():
 
     status, data = get('/maze')
 
-    start_room = data.start_room
+    start_room = data.current_room.identifier
     status, data = get('/maze/%d' % start_room)
     assert status == 200, \
         'GET /maze/%d returned %d instead of 200' % (start_room, status)

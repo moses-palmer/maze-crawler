@@ -40,7 +40,10 @@ def _server_start():
         _SERVER_APPLICATION]
     env = {
         'PYTHONPATH': os.path.join(
-            os.path.dirname(__file__), os.path.pardir, os.path.pardir, 'lib')}
+            os.path.dirname(__file__), os.path.pardir, os.path.pardir, 'lib'),
+        'MAZEWEB_PLUGIN_PATH': os.getenv('MAZEWEB_PLUGIN_PATH'),
+        'MAZEWEB_CONFIG_DIR': os.getenv('MAZEWEB_CONFIG_DIR'),
+        'MAZEWEB_DATA_DIR': os.getenv('MAZEWEB_DATA_DIR')}
 
     # Start bottle
     server = subprocess.Popen(args, env = env)

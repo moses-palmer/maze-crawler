@@ -122,11 +122,17 @@ def test(func):
 
     def inner():
         global _indent
+        test_before = getattr(func, 'test_before', lambda: True)
+        test_after  = getattr(func, 'test_after', lambda: None)
         try:
             printf('%s - %s', test_name, test_description)
             try:
                 _indent += 1
-                func()
+                if not test_before() is False:
+                    try:
+                        func()
+                    finally:
+                        test_after()
                 return True
             finally:
                 _indent -= 1
@@ -152,6 +158,39 @@ def test(func):
     inner.suite = suite.name
     inner.message = None
     return inner
+
+
+def _before(func):
+    """
+    Sets a callable to call before the test is run.
+
+    If this function returns False, the test and the after function if set are
+    not run.
+
+    @param func
+        The function to call before the test is run. This is called with no
+        parameters.
+    """
+    def decorator(test):
+        test.test_before = func
+        return test
+    return decorator
+test.before = _before
+
+def _after(func):
+    """
+    Sets a callable to call after the test is run. The callable is always
+    called if the before function did not raise an exception or return False.
+
+    @param func
+        The function to call after the test is run. This is called with no
+        parameters.
+    """
+    def decorator(test):
+        test.test_after = func
+        return test
+    return decorator
+test.after = _after
 
 
 def _setup(func):

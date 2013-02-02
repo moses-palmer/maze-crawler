@@ -7,6 +7,7 @@ from maze.hex import HexMaze
 from maze.randomized_prim import initialize
 
 from numeric import randuniq
+from ..plugins import PLUGINS
 
 MAZE_CLASSES = dict((len(mc.Wall.WALLS), mc) for mc in (
     TriMaze,
@@ -29,9 +30,13 @@ def new(width = 30, height = 20, walls = 4, seed = None, **kwargs):
     if width <= 0 or height <= 0:
         raise ValueError('invalid maze dimensions')
     maze = MAZE_CLASSES[walls](width, height)
+    maze.plugins = dict((name, plugin()) for name, plugin in PLUGINS.items())
     maze.random = randuniq(
         None,
         seed or random.randint(0, 1000000))
+
+    for plugin in maze.plugins.values():
+        plugin.pre_initialize(maze)
     initialize(maze, lambda max: maze.random.next() % max)
 
     maze.room_mapping = {}
@@ -41,6 +46,9 @@ def new(width = 30, height = 20, walls = 4, seed = None, **kwargs):
         maze.room_mapping[identifier] = room_pos
 
     maze.current_room = maze[(0, 0)].identifier
+
+    for plugin in maze.plugins.values():
+        plugin.post_initialize(maze)
 
     return (maze, kwargs)
 
@@ -82,12 +90,18 @@ def to_dict(maze):
         The maze to convert to a dict.
     @return a dict describing the maze
     """
-    return dict(
+    result = dict(
         width = maze.width,
         height = maze.height,
         walls = len(maze.Wall.WALLS),
+        plugins = list(maze.plugins.keys()),
         start_room = maze[(0, 0)].identifier,
         current_room = room_to_dict(maze, maze.room_mapping[maze.current_room]))
+
+    for plugin in maze.plugins.values():
+        plugin.get_maze(maze, result)
+
+    return result
 
 
 def room_to_dict(maze, room_pos, neighbor_details = False):
@@ -101,7 +115,7 @@ def room_to_dict(maze, room_pos, neighbor_details = False):
         The position of the room.
     @return a dict describing the room
     """
-    return dict(
+    result = dict(
         identifier = maze[room_pos].identifier,
         position = dict(
             x = room_pos[0],
@@ -115,7 +129,13 @@ def room_to_dict(maze, room_pos, neighbor_details = False):
                 if w in maze[room_pos] else None,
             span = dict(
                 start = w.span[0],
-                end = w.span[1])) for w in maze.walls(room_pos)])
+                end = w.span[1])) for w in maze.walls(room_pos)
+            if not maze.edge(w)])
+
+    for plugin in maze.plugins.values():
+        plugin.get_room(maze, room_pos, neighbor_details, result)
+
+    return result
 
 
 def get_adjacent(maze, room_identifier):

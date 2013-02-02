@@ -26,6 +26,15 @@ def plugin_enabled():
 @test
 @test.before(load)
 @test.after(unload)
+def plugin_extra():
+    """Asserts that a plugin from a second directory is loaded"""
+    assert 'extra' in PLUGINS, \
+        'ExtraPlugin was not loaded'
+
+
+@test
+@test.before(load)
+@test.after(unload)
 def plugin_dependencies0():
     """Asserts that a plugin with a dependency is loaded"""
     assert 'depends-1' in PLUGINS, \

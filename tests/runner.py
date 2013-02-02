@@ -8,8 +8,11 @@ os.environ['MAZEWEB_CONFIG_DIR'] = os.path.abspath(os.path.join(
     os.path.dirname(__file__), 'resources'))
 os.environ['MAZEWEB_DATA_DIR'] = os.path.abspath(os.path.join(
     os.path.dirname(__file__), 'resources'))
-os.environ['MAZEWEB_PLUGIN_DIR'] = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), 'resources', 'plugins'))
+os.environ['MAZEWEB_PLUGIN_PATH'] = os.pathsep.join((
+    os.path.abspath(os.path.join(
+        os.path.dirname(__file__), 'resources', 'plugins')),
+    os.path.abspath(os.path.join(
+        os.path.dirname(__file__), 'resources', 'plugins-extra'))))
 
 # Make sure import tests works
 sys.path.append(

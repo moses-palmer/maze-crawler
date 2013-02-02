@@ -3,8 +3,8 @@ import os
 
 from ..util.data import ConfigurationStore
 
-PLUGIN_DIR = os.getenv('MAZEWEB_PLUGIN_DIR', os.path.dirname(__file__))
-__path__ = [PLUGIN_DIR, os.path.dirname(__file__)]
+PLUGIN_PATH = os.getenv('MAZEWEB_PLUGIN_PATH', os.path.dirname(__file__))
+__path__ = PLUGIN_PATH.split(os.pathsep) + [os.path.dirname(__file__)]
 
 # The available plugin classes
 PLUGINS = {}
@@ -139,8 +139,8 @@ class Plugin(object):
 
 def load():
     """
-    Loads all configured plugin classes from $MAZEWEB_PLUGIN_DIR or this
-    directory.
+    Loads all configured plugin classes from all directories in
+    $MAZEWEB_PLUGIN_PATH or this directory.
 
     Plugins are loaded from all packages located under the directory, and they
     are loaded as if they were subpackages of this package. All subclasses of
@@ -149,67 +149,69 @@ def load():
     Plugins loaded are put in PLUGINS, where the key is Plugin.__name__ and the
     value if the plugin class.
     """
-    for name in os.listdir(PLUGIN_DIR):
-        import importlib
+    for plugin_dir in __path__:
+        for name in os.listdir(plugin_dir):
+            import importlib
 
-        # Ignore non-packages
-        pathname = os.path.join(PLUGIN_DIR, name)
-        if not os.path.isdir(pathname) \
-                or not os.path.isfile(os.path.join(pathname,
-                    '__init__.py')):
-            continue
-
-        # Import the package and load all plugins
-        m = importlib.import_module('.' + name, __package__)
-        all_plugins = {}
-        for name in dir(m):
-            value = getattr(m, name)
-
-            # Ignore non-Plugin subclasses
-            try:
-                if not issubclass(value, Plugin) or value is Plugin:
-                    continue
-            except TypeError:
+            # Ignore non-packages
+            pathname = os.path.join(plugin_dir, name)
+            if not os.path.isdir(pathname) \
+                    or not os.path.isfile(os.path.join(pathname,
+                        '__init__.py')):
                 continue
 
-            try:
-                value.load_configuration()
-                if value.CONFIGURATION('plugin.enabled', True) is True:
-                    if not hasattr(value, '__plugin_dependencies__'):
-                        PLUGINS[value.__plugin_name__] = value
-                    else:
-                        all_plugins[value.__plugin_name__] = value
-            except ValueError as e:
-                pass
+            # Import the package and load all plugins
+            m = importlib.import_module('.' + name, __package__)
+            all_plugins = {}
+            for name in dir(m):
+                value = getattr(m, name)
 
-        # Load all plugins with dependencies
-        continue_loading = bool(all_plugins)
-        while continue_loading:
-            continue_loading = False
-            for plugin in all_plugins.keys():
-                if all(d in PLUGINS
-                        for d in all_plugins[plugin].__plugin_dependencies__):
-                    PLUGINS[plugin] = all_plugins[plugin]
-                    del all_plugins[plugin]
-                    continue_loading = True
+                # Ignore non-Plugin subclasses
+                try:
+                    if not issubclass(value, Plugin) or value is Plugin:
+                        continue
+                except TypeError:
+                    continue
 
-        # Unload plugins with conflicts
-        continue_unloading = False
-        for plugin in PLUGINS.keys():
-            conflicts = getattr(PLUGINS[plugin], '__plugin_conflicts__', [])
-            if any(c in PLUGINS for c in conflicts):
-                del PLUGINS[plugin]
-                continue_unloading = True
+                try:
+                    value.load_configuration()
+                    if value.CONFIGURATION('plugin.enabled', True) is True:
+                        if not hasattr(value, '__plugin_dependencies__'):
+                            PLUGINS[value.__plugin_name__] = value
+                        else:
+                            all_plugins[value.__plugin_name__] = value
+                except ValueError as e:
+                    pass
 
-        # Unload plugins depending on conflicted plugins
-        while continue_unloading:
+            # Load all plugins with dependencies
+            continue_loading = bool(all_plugins)
+            while continue_loading:
+                continue_loading = False
+                for plugin in all_plugins.keys():
+                    if all(d in PLUGINS
+                            for d in all_plugins[
+                                plugin].__plugin_dependencies__):
+                        PLUGINS[plugin] = all_plugins[plugin]
+                        del all_plugins[plugin]
+                        continue_loading = True
+
+            # Unload plugins with conflicts
             continue_unloading = False
             for plugin in PLUGINS.keys():
-                dependencies = getattr(PLUGINS[plugin],
-                    '__plugin_dependencies__', [])
-                if not all(d in PLUGINS for d in dependencies):
+                conflicts = getattr(PLUGINS[plugin], '__plugin_conflicts__', [])
+                if any(c in PLUGINS for c in conflicts):
                     del PLUGINS[plugin]
                     continue_unloading = True
+
+            # Unload plugins depending on conflicted plugins
+            while continue_unloading:
+                continue_unloading = False
+                for plugin in PLUGINS.keys():
+                    dependencies = getattr(PLUGINS[plugin],
+                        '__plugin_dependencies__', [])
+                    if not all(d in PLUGINS for d in dependencies):
+                        del PLUGINS[plugin]
+                        continue_unloading = True
 
 
 def unload():

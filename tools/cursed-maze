@@ -1,0 +1,209 @@
+#!/usr/bin/env python
+
+import curses
+import curses.wrapper
+import sys
+
+from cursedmaze import MazeWalker
+
+# The size of a room in characters described as (width, height)
+ROOM_SIZE = (4, 3)
+
+# The mapping from curses keys to directions
+DIRECTIONS = {
+    curses.KEY_LEFT: (-1, 0),
+    curses.KEY_UP: (0, -1),
+    curses.KEY_RIGHT: (1, 0),
+    curses.KEY_DOWN: (0, 1)}
+
+
+def screen_to_room(walker, position):
+    """
+    Converts a screen position to a room position.
+
+    @param walker
+        The MazeWalker for which to convert the screen position.
+    @param position
+        The screen position.
+    @return the tuple (room_pos, inner_pos), where inner_pos is the position
+        within the room
+    """
+    inner_pos = (
+        position[0] % ROOM_SIZE[0],
+        ROOM_SIZE[1] - position[1] % ROOM_SIZE[1] - 1)
+    room_pos = (
+        position[0] // ROOM_SIZE[0],
+        walker.height - position[1] // ROOM_SIZE[1] - 1)
+    return (room_pos, inner_pos)
+
+
+def room_to_screen(walker, room_pos, inner_pos = None):
+    """
+    Converts a room position to a screen position.
+
+    @param walker
+        The MazeWalker for which to convert the room position.
+    @param room_pos, inner_pos
+        The room position, and optionally the position within the room. If inner
+        pos is not specified, the centre of the room is used.
+    @return the screen position
+    """
+    if inner_pos is None:
+        inner_pos = tuple(d // 2 + (d & 1) for d in ROOM_SIZE)
+    return (
+        room_pos[0] * ROOM_SIZE[0] + inner_pos[0],
+        (walker.height - room_pos[1]) * ROOM_SIZE[1] - inner_pos[1])
+
+
+def is_blocked(walker, position):
+    """
+    Determines whether a screen position is blocked by a wall.
+
+    @param walker
+        The maze walker for which to determine whether the position is blocked.
+    @param position
+        The position to check. This is a character position: the room is
+        determined by checking against ROOM_SIZE.
+    @return whether the position is blocked, or None if the state is unknown
+    """
+    room_pos, (rx, ry) = screen_to_room(walker, position)
+
+    # We know nothing about unknown rooms or the outside of the maze
+    try:
+        room = walker[room_pos]
+        if room is None:
+            return None
+    except IndexError:
+        return None
+
+    # Get the directions in which we have doors
+    doors = set(d[1] for d in room[1])
+    left = (-1, 0) in doors
+    up = (0, 1) in doors
+    right = (1, 0) in doors
+    down = (0, -1) in doors
+
+    if rx == 0:
+        if ry == ROOM_SIZE[1] - 1:
+            # Top left corner
+            return True
+        elif ry == 0:
+            # Bottom left corner
+            return True
+        else:
+            # Left wall
+            return not left
+    elif rx == ROOM_SIZE[0] - 1:
+        if ry == ROOM_SIZE[1] - 1:
+            # Top right corner
+            return True
+        elif rx == ROOM_SIZE[0] - 1 and ry == 0:
+            # Bottom right corner
+            return True
+        else:
+            # Right wall
+            return not right
+    elif ry == ROOM_SIZE[1] - 1:
+        # Top wall
+        return not up
+    elif ry == 0:
+        # Bottom wall
+        return not down
+    else:
+        # Inside room
+        return False
+
+
+def paint(win, walker, hrange, vrange):
+    """
+    Paints all known rooms of a maze.
+
+    The current room and its neighbours are painted highlighted, and other rooms
+    with a less distinct colour.
+
+    @param win
+        The curses window to use.
+    @param walker
+        The MazeWalker whose cached rooms to paint.
+    @param hrange, vrange
+        The horizontal and vertical ranges of the maze to paint.
+    """
+    my, mx = win.getmaxyx()
+
+    for x in hrange:
+        for y in vrange:
+            if x < 0 or x >= mx - 1 or y < 0 or y >= my - 1:
+                continue
+
+            blocked = is_blocked(walker, (x, y))
+            room_pos, inner_pos = screen_to_room(walker, (x, y))
+            reachable = walker.is_reachable(room_pos)
+
+            if blocked:
+                flags = curses.A_REVERSE
+                character = ' '
+            elif blocked is None:
+                flags = curses.A_NORMAL
+                character = '#'
+            else:
+                flags = curses.A_NORMAL
+                character = ' '
+
+            win.addch(
+                y,
+                x,
+                character,
+                flags | curses.color_pair(0 if reachable else 1))
+
+
+def wrapped_main(win):
+    curses.curs_set(0)
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_WHITE, -1)
+
+    # Create a maze walker
+    my, mx = win.getmaxyx()
+    walker = MazeWalker(
+        width = mx // ROOM_SIZE[0],
+        height = my // ROOM_SIZE[1])
+
+    position = room_to_screen(walker, walker.position)
+
+    while True:
+        # Paint the maze
+        paint(win, walker,
+            range(mx),
+            range(my))
+        win.addch(position[1], position[0], '#')
+        win.refresh()
+
+        c = win.getch()
+
+        if c in (27, curses.KEY_EXIT):
+            # Escape pressed
+            break
+
+        elif c in DIRECTIONS:
+            next_position = tuple(position + direction
+                for position, direction in zip(position, DIRECTIONS[c]))
+            next_room, inner_pos = screen_to_room(walker, next_position)
+
+            blocked = is_blocked(walker, next_position)
+            if blocked is False:
+                if next_room != walker.position:
+                    # Walking between rooms
+                    try:
+                        walker.position = next_room
+                    except:
+                        curses.flash()
+                        continue
+
+                position = next_position
+
+
+def main():
+    curses.wrapper(wrapped_main)
+
+
+if __name__ == '__main__':
+    main()

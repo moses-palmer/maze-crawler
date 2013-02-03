@@ -34,7 +34,7 @@ def _server_start():
     global _servers
 
     port = _BASE_PORT + len(_servers)
-    args = ['python', '-m', 'bottle',
+    args = [sys.executable, '-m', 'bottle',
         '--bind=%s:%d' % (_HOST, port),
         '--debug',
         _SERVER_APPLICATION]

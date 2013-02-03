@@ -104,7 +104,7 @@ def test(func):
     """
     test_name = func.name \
         if hasattr(func, 'name') \
-        else func.func_name
+        else func.__name__
     if hasattr(func, 'description'):
         test_description = func.description
     elif func.__doc__:

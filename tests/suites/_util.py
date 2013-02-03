@@ -134,7 +134,7 @@ def webtest(f):
             _server_stop()
 
     inner.__doc__ = f.__doc__
-    inner.func_name = f.func_name
+    inner.name = f.__name__
     inner.suite = f.suite if hasattr(f, 'suite') else f.__globals__['__name__']
 
     return test(inner)

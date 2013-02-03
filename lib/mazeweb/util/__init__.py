@@ -6,7 +6,7 @@ from maze.tri import TriMaze
 from maze.hex import HexMaze
 from maze.randomized_prim import initialize
 
-from numeric import randuniq
+from .numeric import randuniq
 from ..plugins import PLUGINS
 
 MAZE_CLASSES = dict((len(mc.Wall.WALLS), mc) for mc in (

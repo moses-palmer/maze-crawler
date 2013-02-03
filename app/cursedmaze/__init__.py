@@ -211,7 +211,7 @@ class MazeWalker(object):
                     response.status, method, path)
 
             # Make sure the data, if received, is application/json
-            data = response.read()
+            data = response.read().decode('ascii')
             assert (response.getheader('Content-Type') == 'application/json'
                     or not data), \
                 'The server did not respond with JSON data'

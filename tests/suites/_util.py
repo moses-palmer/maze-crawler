@@ -113,9 +113,9 @@ def _get_response_data(response):
     @return the response data
     """
     if response.getheader('Content-Type') == 'application/json':
-        return JSONWrapper(json.loads(response.read()))
+        return JSONWrapper(json.loads(response.read().decode('ascii')))
     else:
-        return response.read()
+        return response.read().decode('ascii')
 
 
 def webtest(f):

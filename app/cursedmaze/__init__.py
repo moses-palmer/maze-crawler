@@ -33,7 +33,7 @@ class MazeWalker(object):
         self.cookies = None
         try:
             for h, v in r.getheaders():
-                if h == 'set-cookie':
+                if h.lower() == 'set-cookie':
                     self.cookies = v
                     break
         finally:

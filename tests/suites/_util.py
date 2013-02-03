@@ -57,7 +57,7 @@ def _server_start():
             connection.request('GET', '/')
             r = connection.getresponse()
             for h, v in r.getheaders():
-                if h == 'set-cookie':
+                if h.lower() == 'set-cookie':
                     cookies = v
                     break
             r.close()

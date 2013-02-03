@@ -187,7 +187,7 @@ def load():
             continue_loading = bool(all_plugins)
             while continue_loading:
                 continue_loading = False
-                for plugin in all_plugins.keys():
+                for plugin in list(all_plugins.keys()):
                     if all(d in PLUGINS
                             for d in all_plugins[
                                 plugin].__plugin_dependencies__):
@@ -197,7 +197,7 @@ def load():
 
             # Unload plugins with conflicts
             continue_unloading = False
-            for plugin in PLUGINS.keys():
+            for plugin in list(PLUGINS.keys()):
                 conflicts = getattr(PLUGINS[plugin], '__plugin_conflicts__', [])
                 if any(c in PLUGINS for c in conflicts):
                     del PLUGINS[plugin]
@@ -206,7 +206,7 @@ def load():
             # Unload plugins depending on conflicted plugins
             while continue_unloading:
                 continue_unloading = False
-                for plugin in PLUGINS.keys():
+                for plugin in list(PLUGINS.keys()):
                     dependencies = getattr(PLUGINS[plugin],
                         '__plugin_dependencies__', [])
                     if not all(d in PLUGINS for d in dependencies):

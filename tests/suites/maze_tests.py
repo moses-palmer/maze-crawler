@@ -260,9 +260,9 @@ def maze_walk():
         else:
             directions = sorted(
                 ((w.span.start, w.target) for w in data.walls if w.target),
-                key = lambda (a, i):
-                    a - direction if a > direction
-                    else 2 * math.pi + a - direction)
+                key = lambda a:
+                    a[0] - direction if a[0] > direction
+                    else 2 * math.pi + a[0] - direction)
             direction, next_room = directions[
                 0 if directions[0][1] != previous_room else -1]
             previous_room = current_room

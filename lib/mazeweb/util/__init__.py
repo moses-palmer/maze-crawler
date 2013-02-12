@@ -6,7 +6,7 @@ from maze.tri import TriMaze
 from maze.hex import HexMaze
 from maze.randomized_prim import initialize
 
-from numeric import randuniq
+from .numeric import randuniq
 from ..plugins import PLUGINS
 
 MAZE_CLASSES = dict((len(mc.Wall.WALLS), mc) for mc in (
@@ -37,11 +37,11 @@ def new(width = 30, height = 20, walls = 4, seed = None, **kwargs):
 
     for plugin in maze.plugins.values():
         plugin.pre_initialize(maze)
-    initialize(maze, lambda max: maze.random.next() % max)
+    initialize(maze, lambda max: next(maze.random) % max)
 
     maze.room_mapping = {}
     for room_pos in maze.room_positions:
-        identifier = maze.random.next()
+        identifier = next(maze.random)
         maze[room_pos].identifier = identifier
         maze.room_mapping[identifier] = room_pos
 

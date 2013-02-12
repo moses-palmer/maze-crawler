@@ -34,7 +34,7 @@ def _server_start():
     global _servers
 
     port = _BASE_PORT + len(_servers)
-    args = ['python', '-m', 'bottle',
+    args = [sys.executable, '-m', 'bottle',
         '--bind=%s:%d' % (_HOST, port),
         '--debug',
         _SERVER_APPLICATION]
@@ -57,7 +57,7 @@ def _server_start():
             connection.request('GET', '/')
             r = connection.getresponse()
             for h, v in r.getheaders():
-                if h == 'set-cookie':
+                if h.lower() == 'set-cookie':
                     cookies = v
                     break
             r.close()
@@ -113,9 +113,9 @@ def _get_response_data(response):
     @return the response data
     """
     if response.getheader('Content-Type') == 'application/json':
-        return JSONWrapper(json.loads(response.read()))
+        return JSONWrapper(json.loads(response.read().decode('ascii')))
     else:
-        return response.read()
+        return response.read().decode('ascii')
 
 
 def webtest(f):
@@ -134,7 +134,7 @@ def webtest(f):
             _server_stop()
 
     inner.__doc__ = f.__doc__
-    inner.func_name = f.func_name
+    inner.name = f.__name__
     inner.suite = f.suite if hasattr(f, 'suite') else f.__globals__['__name__']
 
     return test(inner)

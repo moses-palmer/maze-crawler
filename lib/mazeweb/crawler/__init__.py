@@ -1,4 +1,4 @@
 import bottle
 
-import _maze
-import _maze_room
+from . import _maze
+from . import _maze_room

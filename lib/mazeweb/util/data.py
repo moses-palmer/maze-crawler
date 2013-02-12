@@ -27,8 +27,14 @@ class JSONWrapper(object):
                     lambda *args, **kwargs:
                         value(*args, **kwargs))
 
-    def __cmp__(self, other):
-        return cmp(self._d, other)
+    def __lt__(self, other):
+        return self._d < other
+
+    def __gt__(self, other):
+        return self._d > other
+
+    def __eq__(self, other):
+        return self._d == other
 
     def __getattr__(self, key):
         value = self._d[key]

@@ -33,7 +33,7 @@ class MazeWalker(object):
         self.cookies = None
         try:
             for h, v in r.getheaders():
-                if h == 'set-cookie':
+                if h.lower() == 'set-cookie':
                     self.cookies = v
                     break
         finally:
@@ -211,7 +211,7 @@ class MazeWalker(object):
                     response.status, method, path)
 
             # Make sure the data, if received, is application/json
-            data = response.read()
+            data = response.read().decode('ascii')
             assert (response.getheader('Content-Type') == 'application/json'
                     or not data), \
                 'The server did not respond with JSON data'

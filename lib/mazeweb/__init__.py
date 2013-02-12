@@ -19,8 +19,8 @@ def get_session_cookie():
     session.persist()
 
 
-import crawler
-import plugins
+from . import crawler
+from . import plugins
 
 
 app = SessionMiddleware(app, session_options)

@@ -36,7 +36,7 @@ def screen_to_room(walker, position):
         ROOM_SIZE[1] - position[1] % ROOM_SIZE[1] - 1)
     room_pos = (
         position[0] // ROOM_SIZE[0],
-        walker.height - position[1] // ROOM_SIZE[1] - 1)
+        walker.maze.height - position[1] // ROOM_SIZE[1] - 1)
     return (room_pos, inner_pos)
 
 
@@ -59,7 +59,7 @@ def room_to_screen(walker, room_pos, inner_pos = None):
         inner_pos = tuple(d // 2 + (d & 1) for d in ROOM_SIZE)
     return (
         room_pos[0] * ROOM_SIZE[0] + inner_pos[0],
-        (walker.height - room_pos[1]) * ROOM_SIZE[1] - inner_pos[1])
+        (walker.maze.height - room_pos[1]) * ROOM_SIZE[1] - inner_pos[1])
 
 
 def is_blocked(walker, position):

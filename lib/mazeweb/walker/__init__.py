@@ -73,8 +73,6 @@ class MazeWalker(object):
         if data.width != width or data.height != height:
             raise ValueError('Failed to create a maze with dimensions %s' % (
                 str((width, height))))
-        self.width = data.width
-        self.height = data.height
 
         self.maze = {
             3: TriMaze,

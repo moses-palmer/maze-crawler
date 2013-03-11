@@ -47,8 +47,8 @@ def MazeWalker_getitem2():
     assert not mw[mw.current_room] is None, \
         'The current room is not cached'
 
-    for neighbor, direction in mw[mw.current_room][1]:
-        assert not mw[neighbor] is None, \
+    for w in mw.maze.doors(mw.position):
+        assert not getattr(mw[w.room_pos], 'identifier', False) is False, \
             'A neigbour of the current room is not cached'
 
 
@@ -68,7 +68,11 @@ def MazeWalker_current_room1():
     mw = MazeWalker()
 
     start_room = mw.current_room
-    mw.current_room = mw[mw.current_room][1][0][0]
+    mw.current_room = mw[
+        next(
+            mw.maze.doors(
+                mw.mapping[start_room]))
+            .room_pos].identifier
 
 
 @webtest
@@ -77,9 +81,14 @@ def MazeWalker_current_room2():
     mw = MazeWalker()
 
     start_room = mw.current_room
-    mw.current_room = mw[mw.current_room][1][0][0]
-    for unreachable_room in (w[0] for w in mw[mw.current_room][1]
-            if w[0] != start_room):
+    mw.current_room = mw[
+        next(
+            mw.maze.doors(
+                mw.mapping[start_room]))
+            .room_pos].identifier
+    for unreachable_room in (mw[w.room_pos].identifier
+            for w in mw.maze.doors(mw.mapping[mw.current_room])
+            if mw[w.room_pos].identifier != start_room):
         mw.current_room = start_room
 
         with assert_exception(AssertionError):
@@ -101,8 +110,10 @@ def MazeWalker_position1():
     mw = MazeWalker()
 
     start_room = mw.current_room
-    next_room = mw[mw.current_room][1][0][0]
-    mw.position = mw.mapping[next_room]
+    next_room = next(
+        mw.maze.doors(
+            mw.mapping[start_room])).room_pos
+    mw.position = next_room
 
 
 @webtest
@@ -122,9 +133,14 @@ def MazeWalker_position3():
     mw = MazeWalker()
 
     start_room = mw.current_room
-    mw.current_room = mw[mw.current_room][1][0][0]
-    for unreachable_room_id in (w[0] for w in mw[mw.current_room][1]
-            if w[0] != start_room):
+    mw.current_room = mw[
+        next(
+            mw.maze.doors(
+                mw.mapping[start_room]))
+            .room_pos].identifier
+    for unreachable_room_id in (mw[w.room_pos].identifier
+            for w in mw.maze.doors(mw.position)
+            if mw[w.room_pos].identifier != start_room):
         unreachable_room = mw.mapping[unreachable_room_id]
         mw.current_room = start_room
 
@@ -147,19 +163,22 @@ def MazeWalker_is_reachable1():
     mw = MazeWalker()
 
     start_room = mw.current_room
-    mw.current_room = mw[mw.current_room][1][0][0]
+    mw.current_room = mw[
+        next(
+            mw.maze.doors(
+                mw.mapping[start_room]))
+            .room_pos].identifier
 
-    for direction in ((-1, 0), (0, 1), (1, 0), (0, -1)):
+    for w in mw.maze.walls(mw.position):
         old_pos = mw.position
-        next_pos = tuple(p + d
-            for p, d in zip(old_pos, direction))
+        next_pos = mw.maze.walk(w)
         try:
             mw.position = next_pos
             is_reachable = True
+            mw.position = old_pos
         except (AssertionError, ValueError):
             is_reachable = False
 
-        mw.position = old_pos
         assert mw.is_reachable(next_pos) == is_reachable, \
             'MazeWalker.is_reachable returned %s, but the room could %s ' \
             'moved to' % (not is_reachable, 'be' if is_reachable else 'not be')

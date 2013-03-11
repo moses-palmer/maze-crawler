@@ -20,6 +20,10 @@ import sys
 
 from mazeweb.util.data import JSONWrapper
 
+from maze.hex import HexMaze
+from maze.quad import Maze
+from maze.tri import TriMaze
+
 if sys.version_info.major < 3:
     from httplib import CannotSendRequest, HTTPConnection
 else:
@@ -72,9 +76,12 @@ class MazeWalker(object):
         self.width = data.width
         self.height = data.height
 
-        # Create a cache for rooms, and a mapping from ID to position
-        self.rooms = [list(None for i in range(self.width))
-            for j in range(self.height)]
+        self.maze = {
+            3: TriMaze,
+            4: Maze,
+            6: HexMaze}[data.walls](data.width, data.height)
+
+        # Create a mapping from ID to position
         self.mapping = {}
 
         # Retrieve the current room
@@ -104,10 +111,16 @@ class MazeWalker(object):
         if not isinstance(value, tuple) or not len(value) == 2:
             raise ValueError('%s is not a valid position' % str(value))
 
-        room = self.rooms[value[1]][value[0]]
-        if room is None:
-            raise ValueError('Room at %s is unknown' % str(value))
-        self.current_room, walls = room
+        try:
+            room = self.maze[value]
+        except IndexError:
+            raise ValueError('%s is outside of the maze' % str(value))
+
+        try:
+            self.current_room = room.identifier
+        except AttributeError:
+            raise ValueError('%s is not a known room from %s' % (
+                str(value), str(self.position)))
 
     def is_reachable(self, room_position):
         """Returns whether a room is immediately reachable from the current
@@ -124,9 +137,7 @@ class MazeWalker(object):
             # The current room is reachable
             return True
         else:
-            return any(room_position == tuple(p + d
-                    for p, d in zip(self.position, w[1]))
-                for w in self[self.position][1])
+            return self.maze.connected(self.position, room_position)
 
     def __del__(self):
         # Delete the session on the server
@@ -137,16 +148,20 @@ class MazeWalker(object):
                 pass
 
     def __getitem__(self, i):
-        if i in self.mapping:
+        try:
             return self[self.mapping[i]]
 
-        if isinstance(i, tuple) and len(i) == 2:
-            x, y = i
-            if x < 0 or x >= self.width or y < 0 or y >= self.height:
-                raise IndexError()
-            return self.rooms[i[1]][i[0]]
+        except KeyError:
+            if isinstance(i, tuple) and len(i) == 2:
+                x, y = i
+                if False \
+                        or x < 0 or x >= self.maze.width \
+                        or y < 0 or y >= self.maze.height:
+                    raise IndexError()
+                return self.maze[i]
 
         raise KeyError(i)
+
 
     def _update_cache(self, identifier, add_neighbors = True,
             current_room = None):
@@ -164,43 +179,37 @@ class MazeWalker(object):
             :term:`non-recursive room dict`. If this is ``None``, the server
             will be queried.
         """
-        def span_to_direction(span):
-            """Transforms a span expressed as an angle pair to a direction
-            vector.
-            """
-            x = math.cos(span.start) + math.cos(span.end)
-            y = math.sin(span.start) + math.sin(span.end)
-            h = math.sqrt(x**2 + y**2)
-            ix, iy = int(x / h), int(y / h)
-            if abs(ix) == abs(iy):
-                raise ValueError('Angles %d, %d yield invalid direction %s' % (
-                    int(span.start * 360), int(span.end * 360), str((ix, iy))))
-            return (ix, iy)
-
         # Get the current room
         data = current_room or self._get('/maze/%s' % identifier)
-        self.mapping[identifier] = (
-            int(data.position.x),
-            int(data.position.y))
-        self.rooms[data.position.y][data.position.x] = (
-            (
-                int(identifier),
-                tuple((int(w.target.identifier), span_to_direction(w.span))
-                    for w in data.walls if w.target)))
+        room_pos = (int(data.position.x), int(data.position.y))
+        room = self.maze[room_pos]
+
+        # Make sure that the room is what we expect
+        if (data.center.x, data.center.y) != self.maze.get_center(room_pos):
+            raise ValueError('Unexpecter center for room %s: %s' % (
+                str(room_pos), str(data.center)))
+
+        # Update the room
+        room.identifier = identifier
+        self.mapping[room.identifier] = room_pos
+
+        # Update the doors
+        for wall in self.maze.walls(room_pos):
+            try:
+                if not self.maze.edge(wall):
+                    self.maze[room_pos][wall] = next(not w.target is None
+                        for w in data.walls
+                        if w.span.start == wall.span[0])
+            except StopIteration:
+                raise ValueError('Wall %s not found for room %s' % (
+                    wall.NAMES[int(wall)], str(room_pos)))
 
         # Update the neighbour rooms
         if add_neighbors:
             for w in data.walls:
                 if w.target:
-                    self.mapping[int(w.target.identifier)] = (
-                        int(w.target.position.x),
-                        int(w.target.position.y))
-                    self.rooms[w.target.position.y][w.target.position.x] = (
-                        (
-                            int(w.target.identifier),
-                            tuple((int(wall.target),
-                                    span_to_direction(wall.span))
-                                for wall in w.target.walls if wall.target)))
+                    self._update_cache(w.target.identifier, False, w.target)
+
 
     def _req(self, method, path, data = None):
         """Performs an HTTP request to the server for path.

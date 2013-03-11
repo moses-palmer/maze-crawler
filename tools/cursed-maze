@@ -78,13 +78,13 @@ def is_blocked(walker, position):
     # We know nothing about unknown rooms or the outside of the maze
     try:
         room = walker[room_pos]
-        if room is None:
+        if getattr(room, 'identifier', None) is None:
             return None
     except IndexError:
         return None
 
     # Get the directions in which we have doors
-    doors = set(d[1] for d in room[1])
+    doors = set(w.direction for w in walker.maze.doors(room_pos))
     left = (-1, 0) in doors
     up = (0, 1) in doors
     right = (1, 0) in doors

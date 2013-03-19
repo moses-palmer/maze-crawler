@@ -182,3 +182,28 @@ def MazeWalker_is_reachable1():
         assert mw.is_reachable(next_pos) == is_reachable, \
             'MazeWalker.is_reachable returned %s, but the room could %s ' \
             'moved to' % (not is_reachable, 'be' if is_reachable else 'not be')
+
+
+@webtest
+def MazeWalker_walk_to0():
+    """MazeWalker.walk_to for the current room"""
+    mw = MazeWalker()
+
+    start_room = mw.position
+    path = list(mw.walk_to(start_room))
+    assert path == [start_room], \
+        'MazeWalker.walk_to yielded %s' % str(path)
+
+
+@webtest
+def MazeWalker_walk_to1():
+    """MazeWalker.walk_to for the top-right corner"""
+    mw = MazeWalker()
+
+    start_room = mw.position
+    target = (mw.maze.width - 1, mw.maze.height - 1)
+    path = list(mw.walk_to(target))
+    correct = list(mw.maze.walk_path(start_room, target))
+    assert path == correct, \
+        'MazeWalker.walk_to yielded %s instead of %s' % (
+            str(path), str(correct))

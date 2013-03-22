@@ -122,10 +122,10 @@ Glossary
                 "plugins": [],
                 "start_room": 1411380071,
                 "current_room": {
-                    // A non-recursive room dict
+                    // A recursive room dict
                 }
             }
 
         `plugins` contains a list of plugin names.
 
-        .. seealso:: :term:`non-recursive room dict`
+        .. seealso:: :term:`recursive room dict`

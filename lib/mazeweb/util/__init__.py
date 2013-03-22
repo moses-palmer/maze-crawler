@@ -116,7 +116,8 @@ def to_dict(maze):
         walls = len(maze.Wall.WALLS),
         plugins = list(maze.plugins.keys()),
         start_room = maze[(0, 0)].identifier,
-        current_room = room_to_dict(maze, maze.room_mapping[maze.current_room]))
+        current_room = room_to_dict(maze, maze.room_mapping[maze.current_room],
+            neighbor_details = True))
 
     for plugin in maze.plugins.values():
         plugin.get_maze(maze, result)

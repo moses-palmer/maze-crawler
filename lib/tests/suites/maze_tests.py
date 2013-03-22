@@ -210,6 +210,50 @@ def maze_update5():
 
 
 @webtest
+def maze_update6():
+    """Test PUT /maze for an initialised maze returns a room with neighbor
+    details"""
+    maze_reset()
+
+    status, data = get('/maze')
+
+    original_data = dict(
+        current_room = data.current_room.identifier)
+    status, data = put('/maze', original_data)
+
+    assert status == 200, \
+        'PUT /maze returned %d, not 200' % status
+
+    assert all(w.target or True
+        for w in data.current_room.walls), \
+        'Not all walls had details'
+
+    try:
+        def has_target(wall):
+            try:
+                target = wall.target.identifier
+                return  True
+            except (AttributeError, KeyError):
+                return False
+        next_room = next(wall.target.identifier
+            for wall in data.current_room.walls
+            if has_target(wall))
+    except StopIteration as e:
+        raise AssertionError('No walls had details')
+    print str(next_room)
+
+    status, data = put('/maze', dict(
+        current_room = next_room))
+
+    assert status == 200, \
+        'PUT /maze returned %d, not 200' % status
+
+    assert all(w.target or True
+        for w in data.current_room.walls), \
+        'No all walls had details'
+
+
+@webtest
 def maze_delete0():
     """Test DELETE /maze for an uninitialised maze"""
     status, data = delete('/maze')

@@ -170,6 +170,63 @@ def put_pixel(win, x, y, ch, attr = 0):
         pass
 
 
+_view_offset = None
+
+def center_on(win, world_pos):
+    """Centers the screen on a position.
+
+    If the position is near a wall, world_pos may not necessarily be in the
+    centre of the screen.
+
+    :param world_pos: The world coordinate onto which to try to center the
+        virtual view.
+    :type world_pos: (int, int)
+    """
+    global _view_offset
+
+    my, mx = win.getmaxyx()
+    wx, wy = world_pos
+
+    MARGIN = 5
+
+    ox = wx - mx // 2
+    if ox < -MARGIN:
+        ox = -MARGIN
+
+    oy = wy - my // 2
+    if oy < -MARGIN:
+        oy = -MARGIN
+
+    _view_offset = (
+        ox,
+        oy)
+
+def screen_to_world(screen_pos):
+    """
+    Transforms a screen coordinate to a world coordinate.
+
+    The return value may not be inside the maze.
+
+    @param screen_pos
+        The screen position to convert.
+    @return the corresponding world coordinate
+    """
+    global _view_offset
+    return tuple(sp + o for sp, o in zip(screen_pos, _view_offset))
+
+
+def world_to_screen(world_pos):
+    """
+    Transforms a world coordinate to a screen coordinate.
+
+    @param world_pos
+        The world position to convert.
+    @return the corresponding screen coordinate
+    """
+    global _view_offset
+    return tuple(wp - o for wp, o in zip(world_pos, _view_offset))
+
+
 def paint(win, mapper, hrange, vrange):
     """Paints all known rooms of a maze.
 
@@ -187,14 +244,16 @@ def paint(win, mapper, hrange, vrange):
     # Make sure the ranges are lists
     hrange, vrange = list(hrange), list(vrange)
 
-    for wx in hrange:
-        for wy in vrange:
+    for sx in hrange:
+        for sy in vrange:
+            world_pos = screen_to_world((sx, sy))
+
             # Determine the corresponding room
-            room_pos, inner_pos = mapper.world_to_room((wx, wy))
+            room_pos, inner_pos = mapper.world_to_room(world_pos)
 
             # Determine whether the world position is blocked, and whether the
             # room is reachable
-            blocked = mapper.is_blocked((wx, wy))
+            blocked = mapper.is_blocked(world_pos)
             reachable = mapper.walker.is_reachable(room_pos)
 
             if blocked is True:
@@ -208,7 +267,7 @@ def paint(win, mapper, hrange, vrange):
                 character = '%'
 
             put_pixel(win,
-                wx, wy,
+                sx, sy,
                 character,
                 flags | curses.color_pair(0 if reachable else 1))
 
@@ -236,6 +295,7 @@ def wrapped_main(win):
             curses.KEY_DOWN: (0, 1)}
 
         # Paint the maze
+        center_on(win, tuple(p for p in wposition))
         paint(win, mapper,
             range(mx),
             range(my))
@@ -243,8 +303,9 @@ def wrapped_main(win):
         room_pos, inner_pos = mapper.world_to_room(wposition)
 
         # Add the marker
+        screen_pos = world_to_screen(wposition)
         put_pixel(win,
-            wposition[0], wposition[1],
+            screen_pos[0], screen_pos[1],
             '#')
         win.refresh()
 

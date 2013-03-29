@@ -1,13 +1,13 @@
 import json
 import os
 
+# The available plugin classes
+PLUGINS = {}
+
 from ..util.data import ConfigurationStore
 
 PLUGIN_PATH = os.getenv('MAZEWEB_PLUGIN_PATH', os.path.dirname(__file__))
 __path__ = PLUGIN_PATH.split(os.pathsep) + [os.path.dirname(__file__)]
-
-# The available plugin classes
-PLUGINS = {}
 
 
 class Plugin(object):

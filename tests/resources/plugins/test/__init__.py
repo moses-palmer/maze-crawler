@@ -1,4 +1,5 @@
 from .. import Plugin
+from mazeweb.crawler.plugin import MazePlugin
 
 class TestPlugin1(Plugin):
     __plugin_name__ = 'test1'
@@ -74,3 +75,31 @@ class ConflictsPlugin3(Plugin):
 class ConflictsPlugin4(Plugin):
     __plugin_name__ = 'conflicts-4'
     __plugin_dependencies__ = ['conflicts-3']
+
+@MazePlugin.router
+class RouterPlugin1(Plugin):
+    __plugin_name__ = 'router-1'
+
+    @MazePlugin.get('/router-echo/<value>')
+    def get_test(self, value):
+        print self.__class__.__name__
+        return {'value': value}
+
+@MazePlugin.router
+class RouterPlugin2(Plugin):
+    __plugin_name__ = 'router-2'
+    __plugin_conflicts__ = ['router-3']
+
+    @MazePlugin.get('/router-silent/<value>')
+    def get_test(self, value):
+        print self.__class__.__name__
+        return {'value': value}
+
+@MazePlugin.router
+class RouterPlugin3(Plugin):
+    __plugin_name__ = 'router-3'
+
+    @MazePlugin.get('/router-blocker/<value>')
+    def get_test(self, value):
+        print self.__class__.__name__
+        return {'value': value}

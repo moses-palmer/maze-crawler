@@ -178,3 +178,37 @@ def plugins_get_room():
     assert data.get_room_plugin == expected, \
         'GetRoomPlugin set the room data to %s instead of %s' % (
             str(data.get_room_plugin), str(expected))
+
+
+@webtest
+def plugins_check_routes0():
+    """Tests that no maze plugin routes are active when no maze is
+    initialised"""
+    status, data = get('/router-echo/test_value')
+    assert status == 404, \
+        'GET responded %d, not %d' % (status, 404)
+
+
+@webtest
+def plugins_check_routes1():
+    """Tests that maze plugin routes are active when a maze is initialised"""
+    maze_reset()
+
+    status, data = get('/router-echo/test_value')
+    assert status == 200, \
+        'GET responded %d, not %d' % (status, 200)
+
+    expected = dict(
+        value = 'test_value')
+    assert data == expected, \
+        'GET returned %s, not %s' % (str(data), str(expected))
+
+
+@webtest
+def plugins_check_routes2():
+    """Tests that maze plugin routes are inactive when a plugin is unloaded"""
+    maze_reset()
+
+    status, data = get('/router-silent/test_value')
+    assert status == 404, \
+        'GET responded %d, not %d' % (status, 404)

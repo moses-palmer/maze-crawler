@@ -3,7 +3,7 @@ from .. import app, util
 
 
 @app.get('/maze/<room_identifier:int>')
-def maze_get_room(room_identifier):
+def maze_get_room(maze, room_identifier):
     """
     Retrieves a description of a room.
 
@@ -26,14 +26,13 @@ def maze_get_room(room_identifier):
         not immediately reachable, 404 if room_identifier is invalid and 200
         otherwise
     """
-    maze = util.load()
     return util.room_to_dict(
         maze,
         util.get_adjacent(maze, room_identifier))
 
 
 @app.get('/maze/<room_identifier:int>/details')
-def maze_get_room_details(room_identifier):
+def maze_get_room_details(maze, room_identifier):
     """
     Retrieves a thorough description of a room.
 
@@ -47,7 +46,6 @@ def maze_get_room_details(room_identifier):
 
     @see maze_get_room
     """
-    maze = util.load()
     return util.room_to_dict(
         maze,
         util.get_adjacent(maze, room_identifier), True)

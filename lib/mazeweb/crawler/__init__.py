@@ -1,4 +1,4 @@
 import bottle
 
 from . import maze_route
-from . import _maze_room
+from . import maze_room_route

@@ -161,14 +161,17 @@ def maze_update4():
     assert status == 200, \
         'GET /maze/%d returned %d instead of 200' % (start_room, status)
 
-    for next_room in (wall.target for wall in data.walls if wall.target):
+    for next_room in (wall.target.identifier
+            for wall in data.walls
+            if wall.target):
         status, data = get('/maze/%d' % next_room)
         assert status == 200, \
             'GET /maze/%d returned %d instead of 200' % (next_room, status)
 
         try:
-            unreachable_room = next(wall.target for wall in data.walls
-                if wall.target and wall.target != start_room)
+            unreachable_room = next(wall.target.identifier
+                for wall in data.walls
+                if wall.target and wall.target.identifier != start_room)
         except StopIteration:
             continue
         original_data = dict(
@@ -192,7 +195,9 @@ def maze_update5():
     room_identifier = data.current_room.identifier
     status, data = get('/maze/%d' % room_identifier)
 
-    next_room = next(wall.target for wall in data.walls if wall.target)
+    next_room = next(wall.target.identifier
+        for wall in data.walls
+        if wall.target)
 
     original_data = dict(
         current_room = next_room)

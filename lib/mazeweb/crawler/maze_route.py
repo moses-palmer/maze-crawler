@@ -2,7 +2,7 @@ import bottle
 from .. import app, util
 
 @app.get('/maze')
-def maze_get():
+def maze_get(maze):
     """
     Retrieves a description of the current maze.
 
@@ -19,7 +19,7 @@ def maze_get():
 
     @return 204 if no maze has been initialised and 200 otherwise
     """
-    return util.to_dict(util.load())
+    return util.to_dict(maze)
 
 
 @app.post('/maze')

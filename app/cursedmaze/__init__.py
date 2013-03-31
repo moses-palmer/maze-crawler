@@ -154,7 +154,7 @@ class MazeWalker(object):
             return (ix, iy)
 
         # Get the current room
-        data = current_room or self._get('/maze/%s/details' % identifier)
+        data = current_room or self._get('/maze/%s' % identifier)
         self.mapping[identifier] = (
             int(data.position.x),
             int(data.position.y))

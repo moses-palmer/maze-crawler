@@ -173,16 +173,8 @@ def plugins_get_room():
 
     expected = dict(
         room_pos = room_position,
-        neighbor_details = False)
-    status, data = get('/maze/%d' % room_identifier)
-    assert data.get_room_plugin == expected, \
-        'GetRoomPlugin set the room data to %s instead of %s' % (
-            str(data.get_room_plugin), str(expected))
-
-    expected = dict(
-        room_pos = room_position,
         neighbor_details = True)
-    status, data = get('/maze/%d/details' % room_identifier)
+    status, data = get('/maze/%d' % room_identifier)
     assert data.get_room_plugin == expected, \
         'GetRoomPlugin set the room data to %s instead of %s' % (
             str(data.get_room_plugin), str(expected))

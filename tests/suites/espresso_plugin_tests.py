@@ -15,3 +15,16 @@ def espresso_get0():
     status, data = get('/espresso/__unused__')
     assert status == 404, \
         'GET /espresso/__unused__ returned %d, not 404' % status
+
+
+@webtest
+def espresso_get1():
+    """GET CoffeeScript resource that exists"""
+    maze_reset()
+
+    status, data = get('/espresso/hello_world.coffee')
+    assert status == 200, \
+        'GET /espresso/hello_world.js returned %d, not 200' % status
+
+    assert len(data) > 0, \
+        'data was empty'

@@ -31,4 +31,23 @@ class EspressoPlugin(Plugin):
             is appended.
         @return a bottle static_file
         """
-        raise NotImplementedError()
+        coffee_file_rel = path + '.coffee'
+
+        for path in self.configuration.paths:
+            # Construct the filename of the CoffeeScript file
+            coffee_file = os.path.join(path, coffee_file_rel)
+
+            # Make sure the coffee_file is absolute
+            if not os.path.isabs(coffee_file):
+                coffee_file = os.path.abspath(
+                    os.path.join(
+                        self.data_dir,
+                        os.path.pardir,
+                        coffee_file))
+
+            if os.path.isfile(coffee_file):
+                return static_file(
+                    os.path.basename(coffee_file),
+                    os.path.dirname(coffee_file))
+
+        return HttpError(status = 404)

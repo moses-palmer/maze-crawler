@@ -61,3 +61,17 @@ def espresso_get3():
     assert js_data == coffee_data, \
         'JavaScript did not produce same as CoffeeScript: %s != %s' % (
             js_data, coffee_data)
+
+
+@webtest
+def espresso_get4():
+    """GET resource and verify that later specified source directory takes
+    precedence"""
+    maze_reset()
+
+    status, js_script = get('/espresso/shadowed.js')
+    js_data = run_js(js_script)
+
+    assert js_data.strip() == 'Valid data', \
+        'Shadowing file did not take precedence: %s' % (
+            js_data)

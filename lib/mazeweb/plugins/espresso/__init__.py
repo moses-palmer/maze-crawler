@@ -43,7 +43,7 @@ class EspressoPlugin(Plugin):
         coffee_file_rel = path + '.coffee'
 
         if not os.path.isfile(target) or self.configuration('compile.always'):
-            for path in self.configuration.paths:
+            for path in reversed(list(self.configuration.paths)):
                 # Construct the filename of the CoffeeScript file
                 coffee_file = os.path.join(path, coffee_file_rel)
 
@@ -76,7 +76,7 @@ class EspressoPlugin(Plugin):
         """
         coffee_file_rel = path + '.coffee'
 
-        for path in self.configuration.paths:
+        for path in reversed(list(self.configuration.paths)):
             # Construct the filename of the CoffeeScript file
             coffee_file = os.path.join(path, coffee_file_rel)
 

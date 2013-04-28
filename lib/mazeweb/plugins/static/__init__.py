@@ -25,7 +25,9 @@ class StaticPlugin(Plugin):
         @param path
             The path to the static file to retrieve.
         """
+        self.res.path = list(reversed(list(self.res.path)))
         abspath = self.res.lookup(path)
+        self.res.path = list(reversed(list(self.res.path)))
         if not abspath is None:
             return static_file(path, abspath[:-len(path)])
         else:

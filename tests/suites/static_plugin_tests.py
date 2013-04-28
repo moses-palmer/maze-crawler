@@ -23,3 +23,16 @@ def static_get1():
 
     assert data.hello == 'world', \
         'GET /static/hello.json returned %s' % str(data)
+
+
+@webtest
+def static_get2():
+    """GET resource and verify that later specified source directory takes
+    precedence"""
+    maze_reset()
+
+    status, data = get('/static/shadowed.txt')
+
+    assert data.strip() == 'Valid data', \
+        'Shadowing file did not take precedence: %s' % (
+            data)

@@ -5,6 +5,7 @@ import tempfile
 from mazeweb.plugins import load, unload, PLUGINS
 
 from ._util import webtest, get, put, post, delete, maze_reset, webtest
+from ._script_util import run_coffee, run_js
 
 
 @webtest
@@ -28,3 +29,35 @@ def espresso_get1():
 
     assert len(data) > 0, \
         'data was empty'
+
+
+@webtest
+def espresso_get2():
+    """GET resource and verify compatibility with CoffeScript for empty
+    output"""
+    maze_reset()
+
+    status, js_script = get('/espresso/empty.js')
+    js_data = run_js(js_script)
+    status, coffee_script = get('/espresso/empty.coffee')
+    coffee_data = run_coffee(coffee_script)
+
+    assert js_data == coffee_data, \
+        'JavaScript did not produce same as CoffeeScript: %s != %s' % (
+            js_data, coffee_data)
+
+
+@webtest
+def espresso_get3():
+    """GET resource and verify compatibility with CoffeScript for non-empty
+    output"""
+    maze_reset()
+
+    status, js_script = get('/espresso/hello_world.js')
+    js_data = run_js(js_script)
+    status, coffee_script = get('/espresso/hello_world.coffee')
+    coffee_data = run_coffee(coffee_script)
+
+    assert js_data == coffee_data, \
+        'JavaScript did not produce same as CoffeeScript: %s != %s' % (
+            js_data, coffee_data)

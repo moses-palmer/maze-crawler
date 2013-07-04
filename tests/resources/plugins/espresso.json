@@ -2,5 +2,8 @@
     "paths": [
         "espresso-1",
         "espresso-2"
-    ]
+    ],
+    "compile": {
+        "always": true
+    }
 }

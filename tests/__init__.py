@@ -58,6 +58,8 @@ class Suite(object):
 
         @return the failed tests, or None if the suite was cancelled by setup
         """
+        printf('Running test suite %s with %d tests...',
+            self.name, len(self.tests))
         if not self._setup():
             return None
         global _indent
@@ -217,8 +219,6 @@ def run():
     total_failures = []
 
     for suite in Suite.__suites__.values():
-        printf('Running test suite %s with %d tests...',
-            suite.name, len(suite.tests))
         _indent += 1
         failures = suite.run()
         _indent -= 1

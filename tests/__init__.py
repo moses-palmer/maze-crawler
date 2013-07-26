@@ -162,6 +162,49 @@ def test(func):
     return inner
 
 
+def suite(func):
+    """
+    Use this decorator to mark a callable as a full test suite.
+
+    The decorated function must return a list of tuples on the format (name,
+    message). Each tuple represents a failed test with the name name and the
+    message message.
+
+    To signal that the suite was cancelled, return None.
+    """
+    class InnerTestResult(object):
+        def __init__(self, name, message):
+            self.name = name
+            self.message = message
+
+    class InnerSuite(Suite):
+        def __init__(self, name):
+            self._name = name
+
+        def run(self):
+            """
+            @see Suite.run
+            """
+            printf('Running test suite %s...',
+                func.__name__)
+            if not getattr(func, 'setup', lambda: True)():
+                return None
+            global _indent
+            _indent += 1
+            result = func()
+            if result is None:
+                return None
+            failures = [InnerTestResult(*t) for t in result]
+            _indent -= 1
+            return failures
+
+    # Add the function as a suite
+    wrapped = InnerSuite(func.__name__)
+    Suite.__suites__[wrapped.name] = wrapped
+
+    return wrapped
+
+
 def _before(func):
     """
     Sets a callable to call before the test is run.

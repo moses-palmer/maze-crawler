@@ -86,6 +86,10 @@ class Plugin(object):
     def __init__(self):
         self.data_dir = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'),
             self.name)
+        self.cache_dir = os.path.join(os.getenv('MAZEWEB_CACHE_DIR', '.'),
+            self.name)
+        if not os.path.isdir(self.cache_dir):
+            os.makedirs(self.cache_dir)
 
     @property
     def name(self):

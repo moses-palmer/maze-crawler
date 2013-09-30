@@ -22,11 +22,17 @@ sys.path.append(
 import tests.suites
 
 
-def main():
+def main(suite_names):
     import importlib
 
-    for suite_name in tests.suites.__all__:
-        importlib.import_module('.' + suite_name, 'tests.suites')
+    suite_names = suite_names or tests.suites.__all__
+
+    for suite_name in suite_names:
+        try:
+            importlib.import_module('.' + suite_name, 'tests.suites')
+        except ImportError as e:
+            print('Failed to import test suite %s: %s' % (suite_name, str(e)))
+
     failures = tests.run()
     if failures is None:
         print('Test suite was cancelled by setup')
@@ -43,4 +49,4 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))

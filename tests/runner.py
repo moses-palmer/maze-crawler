@@ -25,15 +25,7 @@ import tests.suites
 def main(suite_names):
     import importlib
 
-    suite_names = suite_names or tests.suites.__all__
-
-    for suite_name in suite_names:
-        try:
-            importlib.import_module('.' + suite_name, 'tests.suites')
-        except ImportError as e:
-            print('Failed to import test suite %s: %s' % (suite_name, str(e)))
-
-    failures = tests.run()
+    failures = tests.run(suite_names or None)
     if failures is None:
         print('Test suite was cancelled by setup')
         sys.exit(-1)

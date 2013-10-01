@@ -257,9 +257,18 @@ def _teardown(func):
 test.teardown = _teardown
 
 
-def run():
+def run(suite_names):
+    import importlib
+    import suites
+
     global _indent
     total_failures = []
+
+    for suite_name in suite_names or suites.__all__:
+        try:
+            importlib.import_module('.' + suite_name, 'tests.suites')
+        except ImportError as e:
+            print('Failed to import test suite %s: %s' % (suite_name, str(e)))
 
     for suite in Suite.__suites__.values():
         _indent += 1

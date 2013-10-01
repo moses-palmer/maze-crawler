@@ -257,6 +257,20 @@ def _teardown(func):
 test.teardown = _teardown
 
 
+suite_injectors = []
+
+def injector(f):
+    """
+    A decorator that marks a function as a suite injector function.
+
+    Any function that is marked with this decorator will be called with a list
+    of suite_names to inject or None, if all suites are to be injected.
+    """
+    global suite_injector
+    suite_injectors.append(f)
+    return f
+
+
 def run(suite_names):
     import importlib
     import suites
@@ -264,11 +278,32 @@ def run(suite_names):
     global _indent
     total_failures = []
 
-    for suite_name in suite_names or suites.__all__:
+    # First import all named modules, or all Python files
+    import_failures = []
+    for suite_name in suites.__all__:
+        if (suite_names
+                and suite_name.endswith('_tests')
+                and not suite_name in suite_names):
+            continue
         try:
-            importlib.import_module('.' + suite_name, 'tests.suites')
+            test_module = importlib.import_module(
+                '.' + suite_name, 'tests.suites')
+
         except ImportError as e:
-            print('Failed to import test suite %s: %s' % (suite_name, str(e)))
+            import_failures.append((suite_name, e))
+
+    # Call all suite injectors and accumulate the names of the injected suites
+    global suite_injectors
+    injected_suites = []
+    for suite_injector in suite_injectors:
+        injected_suites.extend(suite_injector(suite_names))
+
+    # Print a list of the remaining import failures
+    remaining_import_failures = ((suite_name, e)
+        for suite_name, e in import_failures
+        if not suite_name in injected_suites)
+    for suite_name, e in remaining_import_failures:
+        print('Failed to import test suite %s: %s' % (suite_name, str(e)))
 
     for suite in Suite.__suites__.values():
         _indent += 1

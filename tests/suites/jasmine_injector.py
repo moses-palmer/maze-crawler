@@ -1,8 +1,11 @@
-from .. import test
+from .. import test, injector
 
-def inject_suites():
+@injector
+def inject_suites(suite_names):
     """
     The function that injects coffee scripts in this directory as test suites.
+
+    This function is invoked by tests.run because of its name.
     """
     import json
     import os
@@ -130,13 +133,19 @@ def inject_suites():
             self.failures.append(
                 (self._spec_id_to_str(spec_id), self.specs[spec_id]))
 
+    result = []
     directory = os.path.dirname(os.path.abspath(__file__))
     for filename in (
             f for f in os.listdir(directory)
             if f[0] != '_'
                 and any(f.endswith(extension) for extension in extensions)):
         path = os.path.join(directory, filename)
-        suite(JasmineSuite(path, **args))
 
+        s = JasmineSuite(path, **args)
+        if suite_names and not s.__name__ in suite_names:
+            continue
 
-inject_suites()
+        suite(s)
+        result.append(s.__name__)
+
+    return result

@@ -36,6 +36,7 @@ def get_session_cookie():
     session.persist()
 
 
+import _info as info
 from . import crawler
 from . import plugins
 

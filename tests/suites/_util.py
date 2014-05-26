@@ -13,6 +13,7 @@ if sys.version_info.major < 3:
 else:
     from http.client import CannotSendRequest, HTTPConnection
 
+
 # The list of servers running
 _servers = []
 
@@ -39,12 +40,8 @@ def _server_start():
         '--debug',
         _SERVER_APPLICATION]
     env = {
-        'PYTHONPATH': os.path.join(
-            os.path.dirname(__file__), os.path.pardir, os.path.pardir, 'lib'),
-        'MAZEWEB_PLUGIN_PATH': os.getenv('MAZEWEB_PLUGIN_PATH'),
-        'MAZEWEB_CONFIG_DIR': os.getenv('MAZEWEB_CONFIG_DIR'),
-        'MAZEWEB_DATA_DIR': os.getenv('MAZEWEB_DATA_DIR'),
-        'MAZEWEB_CACHE_DIR': os.getenv('MAZEWEB_CACHE_DIR')}
+        'PYTHONPATH': os.pathsep.join(sys.path)}
+    env.update(os.environ)
 
     # Start bottle
     server = subprocess.Popen(args, env = env)

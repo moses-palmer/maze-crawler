@@ -40,5 +40,5 @@ from . import crawler
 from . import plugins
 
 
-app = SessionMiddleware(app, session_options)
+session_app = SessionMiddleware(app, session_options)
 plugins.load()

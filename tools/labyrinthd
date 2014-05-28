@@ -18,14 +18,14 @@ EOF
 --wait)
     # Start the bottle server in the foreground
     shift
-    python -m bottle $@ mazeweb:app
+    python -m bottle $@ mazeweb:session_app
     ;;
 
 *)
     # Start the bottle server in the background
     PID_FILE="$1"
     shift
-    python -m bottle $@ mazeweb:app &
+    python -m bottle $@ mazeweb:session_app &
     SERVER_PID=$!
     echo "$SERVER_PID" > "$PID_FILE"
     ;;

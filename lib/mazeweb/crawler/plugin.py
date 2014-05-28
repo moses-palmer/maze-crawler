@@ -70,6 +70,7 @@ class MazePlugin(object):
 
     class routed(object):
         def __init__(self, callback, method, *args, **kwargs):
+            self.__name__ = callback.__name__
             self.callback = callback
             self.method = method
             self.args = args

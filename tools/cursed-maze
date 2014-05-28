@@ -4,7 +4,7 @@ import curses
 import curses.wrapper
 import sys
 
-from cursedmaze import MazeWalker
+from mazeweb.walker import MazeWalker
 
 # The size of a room in characters described as (width, height)
 ROOM_SIZE = (4, 3)

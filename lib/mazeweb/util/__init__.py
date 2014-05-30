@@ -9,6 +9,7 @@ from maze.randomized_prim import initialize
 from .numeric import randuniq
 from ..plugins import PLUGINS
 
+
 MAZE_CLASSES = dict((len(mc.Wall.WALLS), mc) for mc in (
     TriMaze,
     Maze,

@@ -1,6 +1,7 @@
 import bottle
 from .. import app, util
 
+
 @app.get('/maze')
 def maze_get(maze):
     """

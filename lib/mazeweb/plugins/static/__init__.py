@@ -4,6 +4,7 @@ from .. import Plugin
 from bottle import HTTPResponse, ResourceManager, static_file
 from mazeweb.crawler.plugin import MazePlugin
 
+
 @MazePlugin.router
 class StaticPlugin(Plugin):
     __plugin_name__ = 'static'

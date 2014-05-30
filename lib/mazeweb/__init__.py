@@ -2,6 +2,7 @@ import bottle
 
 from beaker.middleware import SessionMiddleware
 
+
 session_options = {
     'session.type': 'memory',
     'session.cookie_expires': 300,

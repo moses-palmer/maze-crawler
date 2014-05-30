@@ -22,8 +22,9 @@ PLUGINS = {}
 
 from ..util.data import ConfigurationStore
 
-PLUGIN_PATH = os.getenv('MAZEWEB_PLUGIN_PATH', os.path.dirname(__file__))
-__path__ = PLUGIN_PATH.split(os.pathsep) + [os.path.dirname(__file__)]
+PLUGIN_PATH = os.getenv('MAZEWEB_PLUGIN_PATH', None)
+__path__ = (PLUGIN_PATH.split(os.pathsep) if not PLUGIN_PATH is None else []) \
+    + [os.path.dirname(__file__)]
 
 
 class Plugin(object):

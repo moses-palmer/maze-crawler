@@ -144,7 +144,7 @@ class Plugin(object):
         @raise ValueError if the configuration cannot be read
         """
         # Load the JSON data and stop if it fails
-        filename = os.path.join(os.getenv('MAZEWEB_CONFIG_DIR', ''),
+        filename = os.path.join(os.getenv('MAZEWEB_CONFIG_DIR', '.'),
             'plugins', self.__plugin_name__ + '.json')
         try:
             with open(filename, 'r') as f:

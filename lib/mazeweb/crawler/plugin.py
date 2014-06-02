@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
+import functools
 import inspect
 from bottle import abort, install, HTTPResponse, HTTPError
 
@@ -42,6 +43,7 @@ class MazePlugin(object):
         if not 'maze' in argspec and not isinstance(callback, self.routed):
             return callback
 
+        @functools.wraps(callback)
         def wrapper(*args, **kwargs):
             try:
                 argspec = inspect.getargspec(context['callback'])[0]
@@ -71,6 +73,7 @@ class MazePlugin(object):
     class routed(object):
         def __init__(self, callback, method, *args, **kwargs):
             self.__name__ = callback.__name__
+            self.__doc__ = callback.__doc__
             self.callback = callback
             self.method = method
             self.args = args

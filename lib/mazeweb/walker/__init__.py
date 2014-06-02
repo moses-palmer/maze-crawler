@@ -96,7 +96,7 @@ class MazeWalker(object):
         maze = self._put('/maze', dict(
             current_room = value))
         self._current_room = value
-        self._update_cache(self._current_room, maze.current_room)
+        self._update_cache(self._current_room, True, maze.current_room)
 
     @property
     def position(self):

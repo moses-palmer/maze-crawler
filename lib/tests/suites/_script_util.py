@@ -71,6 +71,6 @@ def run_coffee(code):
     coffee_command = [
         os.getenv('NODEJS_BIN', 'nodejs'),
         os.path.join(os.path.dirname(os.path.abspath(__file__)),
-            os.pardir, os.pardir, 'coffee-script', 'bin', 'coffee')]
+            os.pardir, os.pardir, os.pardir, 'coffee-script', 'bin', 'coffee')]
 
     return _run_script(code, coffee_command, '.coffee')

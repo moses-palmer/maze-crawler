@@ -9,17 +9,59 @@ def printf(format, *args):
 
 
 class assert_exception(object):
-    def __init__(self, *exceptions):
-        self.exceptions = exceptions
+    """
+    Allows to assert that a block of code raises an exception.
+
+    @raise AssertionError if no exception is raised or the exception was of a
+        correct type but not validated by the checker
+    """
+    def __init__(self, exception, checker = lambda e: True):
+        """
+        Creates an exception asserter.
+
+        @param exception
+            The exception to require. The type of the raised exception is
+            checked against this value with the is operator. If this expression
+            is not True, the actual exception value is checked with the ==
+            operator. This allows exceptions to override __eq__ and thus this
+            parameter to be of any type.
+        @param checker
+            A function to validate an exception once its type has been verified.
+        """
+        self.exception = exception
+        self.checker = checker
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        assert exc_type in self.exceptions, \
-            'None of exceptions [%s] were thrown' % (', '.join(
-                e.__name__ for e in self.exceptions))
+        if exc_value and not (
+                exc_type is self.exception or exc_value == self.exception):
+            return
+        elif not exc_value:
+            raise AssertionError(
+                'The exception %s was not raised' % str(self.exception))
+
+        assert exc_value and self.checker(exc_value), \
+            'The exception checker failed for %s' % str(exc_value)
         return True
+
+
+def assert_eq(v1, v2):
+    """
+    Asserts that v1 == v2.
+
+    @raise AssertionError if not (v1 == v2)
+    """
+    if isinstance(v1, str) and isinstance(v2, str):
+        # Handle string comparison specially
+        if v1 != v2:
+            import difflib
+            raise AssertionError('Strings differ:\n%s' % '\n'.join(
+                difflib.ndiff(str(v1).splitlines(), str(v2).splitlines())))
+    else:
+        assert v1 == v2, \
+            '%s is not %s' % (v1, v2)
 
 
 class Suite(object):
@@ -257,9 +299,53 @@ def _teardown(func):
 test.teardown = _teardown
 
 
-def run():
+suite_injectors = []
+
+def injector(f):
+    """
+    A decorator that marks a function as a suite injector function.
+
+    Any function that is marked with this decorator will be called with a list
+    of suite_names to inject or None, if all suites are to be injected.
+    """
+    global suite_injector
+    suite_injectors.append(f)
+    return f
+
+
+def run(suite_names):
+    import importlib
+    import suites
+
     global _indent
     total_failures = []
+
+    # First import all named modules, or all Python files
+    import_failures = []
+    for suite_name in suites.__all__:
+        if (suite_names
+                and suite_name.endswith('_tests')
+                and not suite_name in suite_names):
+            continue
+        try:
+            test_module = importlib.import_module(
+                '.' + suite_name, 'tests.suites')
+
+        except ImportError as e:
+            import_failures.append((suite_name, e))
+
+    # Call all suite injectors and accumulate the names of the injected suites
+    global suite_injectors
+    injected_suites = []
+    for suite_injector in suite_injectors:
+        injected_suites.extend(suite_injector(suite_names))
+
+    # Print a list of the remaining import failures
+    remaining_import_failures = ((suite_name, e)
+        for suite_name, e in import_failures
+        if not suite_name in injected_suites)
+    for suite_name, e in remaining_import_failures:
+        print('Failed to import test suite %s: %s' % (suite_name, str(e)))
 
     for suite in Suite.__suites__.values():
         _indent += 1

@@ -19,18 +19,26 @@ os.environ['MAZEWEB_PLUGIN_PATH'] = os.pathsep.join((
 # Make sure import tests works
 sys.path.append(
     os.path.join(os.path.dirname(__file__), os.pardir))
-import tests
-from tests.suites import *
+import tests.suites
 
-failures = tests.run()
-if failures is None:
-    print('Test suite was cancelled by setup')
-    sys.exit(-1)
 
-print('')
-print('All test suites completed with %d failed tests' % len(failures))
-if failures:
-    print('Failed tests:\n%s' % '\n'.join(
-        '\t%s - %s' % (test.name, test.message)
-            for test in failures))
-sys.exit(len(failures))
+def main(suite_names):
+    import importlib
+
+    failures = tests.run(suite_names or None)
+    if failures is None:
+        print('Test suite was cancelled by setup')
+        sys.exit(-1)
+
+    print('')
+    print('All test suites completed with %d failed tests' % len(failures))
+    if failures:
+        print('Failed tests:\n%s' % '\n'.join(
+            '\t%s - %s' % (test.name, test.message)
+                for test in failures))
+
+    return len(failures)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))

@@ -24,20 +24,22 @@ from mazeweb.crawler.plugin import MazePlugin
 
 @MazePlugin.router
 class EspressoPlugin(Plugin):
+    """Compiles CoffeeScript to JavaScript during runtime and serves it."""
     __plugin_name__ = 'espresso'
 
     def _compile(self, source, destination_dir):
-        """
-        Compiles a Coffee script file source into a JavaScript file destination.
+        """Compiles a Coffee script file source into a JavaScript file
+        destination.
 
         The compilation is performed by the coffe compiler installed on the
         system.
 
-        @param source
-            The source CoffeScript file.
-        @param destination_dir
-            The destinataion directory for the JavaScript file.
-        @raise ValueError if the source file cannot be compiled
+        :param str source: The source CoffeScript file.
+
+        :param str destination_dir: The destinataion directory for the
+            JavaScript file.
+
+        :raises ValueError: if the source file cannot be compiled
         """
         code = subprocess.call([
             'coffee',
@@ -48,13 +50,18 @@ class EspressoPlugin(Plugin):
 
     @MazePlugin.get('/espresso/<path:path>.js')
     def get_js(self, path):
-        """
-        Retrieves a coffee script and, if necessary, compiles it.
+        """Retrieves a *CoffeeScript* file and, if necessary, compiles it.
 
-        @param path
-            The base path to the file to retrieve. The file extensions '.coffee'
-            and '.js' are appended.
-        @return a bottle static_file
+        The response is a *JavaScript* file.
+
+        :param str path: The base path to the file to retrieve. The file
+            extensions '.coffee' and '.js' are appended.
+
+        :statuscode 200: the file was found and compiled
+
+        :statusocde 404: the file does not exist
+
+        :statuscode 500: the *CoffeeScript* failed to compile
         """
         target = os.path.join(self.cache_dir, path + '.js')
         coffee_file_rel = path + '.coffee'
@@ -83,13 +90,16 @@ class EspressoPlugin(Plugin):
 
     @MazePlugin.get('/espresso/<path:path>.coffee')
     def get_coffee(self, path):
-        """
-        Retrieves a coffee script without compiling it.
+        """Retrieves a *CoffeeScript* file without compiling it.
 
-        @param path
-            The base path to the file to retrieve. The file extension '.coffee'
-            is appended.
-        @return a bottle static_file
+        The response is a file.
+
+        :param path: The base path to the file to retrieve. The file extension
+            '.coffee' is appended.
+
+        :statuscode 200: the file was found
+
+        :statuscode 404: the file was not found
         """
         coffee_file_rel = path + '.coffee'
 

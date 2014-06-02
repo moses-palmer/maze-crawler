@@ -17,7 +17,7 @@
 import json
 import os
 
-# The available plugin classes
+#: The available plugin classes
 PLUGINS = {}
 
 from ..util.data import ConfigurationStore
@@ -28,75 +28,69 @@ __path__ = (PLUGIN_PATH.split(os.pathsep) if not PLUGIN_PATH is None else []) \
 
 
 class Plugin(object):
-    """
-    A class describing the interface to plugin modules.
+    """A class describing the interface to plugin modules.
     """
     def pre_initialize(self, maze):
-        """
-        Called when the maze has been initialised and all plugins loaded, but
+        """Called when the maze has been initialised and all plugins loaded, but
         before the maze is initialised.
 
-        @param maze
-            The newly created maze.
+        :param maze.BaseMaze maze: The newly created maze.
         """
         pass
 
     def post_initialize(self, maze):
-        """
-        Called when the maze has been initialised and all plugins loaded, and
+        """Called when the maze has been initialised and all plugins loaded, and
         the maze has been initialised.
 
-        @param maze
-            The newly created maze.
+        :param maze.BaseMaze maze: The newly created maze.
         """
         pass
 
     def get_maze(self, maze, result):
-        """
-        Called when the wire representation of the maze is generated.
+        """Called when the wire representation of the maze is generated.
 
         This callback is called after the standard representation is generated.
 
-        @param maze
-            The maze for which the wire representation is being generated.
-        @param result
-            The dict representing the maze.
+        :param maze.BaseMaze maze: The maze for which the wire representation is
+            being generated.
+
+        :param dict result: The dict representing the maze.
         """
         pass
 
     def update_maze(self, maze, value, result):
-        """
-        Called when the maze is being updated by the client and the wire
+        """Called when the maze is being updated by the client and the wire
         representation is generated.
 
         This callback is called after the standard representation is generated,
         and after get_maze has been called for the newly updated maze.
 
-        @param maze
-            The maze for which the wire representation is being generated.
-        @param value
-            The value sent by the client.
-        @param result
-            The dict representing the maze.
+        :param maze.BaseMaze maze: The maze for which the wire representation is
+            being generated.
+
+        :param dict value: The JSON value sent by the client.
+
+        :param dict result: The dict representing the maze.
         """
         pass
 
     def get_room(self, maze, room_pos, neighbor_details, result):
-        """
-        Called when the wire representation of a room is generated.
+        """Called when the wire representation of a room is generated.
 
         This callback is called after the standard representation is generated.
 
-        @param maze
-            The maze for which the wire representation is being generated.
-        @param room_pos
+        :param maze.BaseMaze maze: The maze for which the wire representation is
+            being generated.
+
+        :param room_pos:
             The position of the room.
-        @param neighbor_details
-            Whether the client has requested neighbour details. This is merely
-            an informational parameter; this callback will be called for the
-            neighbouring rooms as well.
-        @param result
-            The dict representing the room.
+        :type room_pos: (int, int)
+
+        :param bool neighbor_details: Whether the client has requested neighbour
+            details. This is merely an informational parameter; this callback
+            will be called for the neighbouring rooms as well.
+
+        :param dict result: The dict representing the room.
         """
         pass
 
@@ -125,24 +119,24 @@ class Plugin(object):
 
     @property
     def configuration(self):
-        """The plugin configuration"""
+        """The plugin configuration as a
+        :class:`~mazeweb.util.data.ConfigurationStore`"""
         return self.CONFIGURATION
 
     @classmethod
     def load_configuration(self):
-        """
-        Loads the configuration for this plugin and caches it in the class.
+        """Loads the configuration for this plugin and caches it in the class.
 
         The configuration is read from the file
-        $MAZEWEB_CONFIG_DIR/<self.__plugin_name__>.json. If this file does not
-        exist, ValueError is raised.
+        ``$MAZEWEB_CONFIG_DIR/<self.__plugin_name__>.json``. If this file does
+        not exist, ``ValueError`` is raised.
 
-        If the environment variable $MAZEWEB_CONFIG_DIR is not set, the
+        If the environment variable ``$MAZEWEB_CONFIG_DIR`` is not set, the
         configuration will be loaded from the current directory.
 
-        The value cached is a ConfigurationStore.
+        The value cached is a :class:`~mazeweb.util.data.ConfigurationStore`.
 
-        @raise ValueError if the configuration cannot be read
+        :raises ValueError: if the configuration cannot be read
         """
         # Load the JSON data and stop if it fails
         filename = os.path.join(os.getenv('MAZEWEB_CONFIG_DIR', '.'),
@@ -159,16 +153,16 @@ class Plugin(object):
 
 
 def load():
-    """
-    Loads all configured plugin classes from all directories in
-    $MAZEWEB_PLUGIN_PATH or this directory.
+    """Loads all configured plugin classes from all directories in
+    ``$MAZEWEB_PLUGIN_PATH`` and this directory.
 
     Plugins are loaded from all packages located under the directory, and they
     are loaded as if they were subpackages of this package. All subclasses of
-    Plugin that have a configuration in $MAZEWEB_CONFIG_DIR/plugins are loaded.
+    Plugin that have a configuration in ``$MAZEWEB_CONFIG_DIR/plugins`` are
+    loaded.
 
-    Plugins loaded are put in PLUGINS, where the key is Plugin.__name__ and the
-    value if the plugin class.
+    Plugins loaded are put in ``PLUGINS``, where the key is ``Plugin.__name__``
+    and the value the plugin class.
     """
     for plugin_dir in __path__:
         for name in os.listdir(plugin_dir):
@@ -236,7 +230,6 @@ def load():
 
 
 def unload():
-    """
-    Clears all cached plugin classes.
+    """Clears all cached plugin classes.
     """
     PLUGINS.clear()

@@ -6,10 +6,10 @@ import sys
 
 from mazeweb.walker import MazeWalker
 
-# The size of a room in characters described as (width, height)
+#: The size of a room in characters described as (width, height)
 ROOM_SIZE = (4, 3)
 
-# The mapping from curses keys to directions
+#: The mapping from curses keys to directions
 DIRECTIONS = {
     curses.KEY_LEFT: (-1, 0),
     curses.KEY_UP: (0, -1),
@@ -18,15 +18,18 @@ DIRECTIONS = {
 
 
 def screen_to_room(walker, position):
-    """
-    Converts a screen position to a room position.
+    """Converts a screen position to a room position.
 
-    @param walker
-        The MazeWalker for which to convert the screen position.
-    @param position
+    :param mazeweb.walker.MazeWalke walker: The walker for which to convert the
+        screen position.
+
+    :param position:
         The screen position.
-    @return the tuple (room_pos, inner_pos), where inner_pos is the position
+    :type position: (int, int)
+
+    :return: the tuple (room_pos, inner_pos), where inner_pos is the position
         within the room
+    :rtype: ((int, int), (int, int))
     """
     inner_pos = (
         position[0] % ROOM_SIZE[0],
@@ -38,15 +41,19 @@ def screen_to_room(walker, position):
 
 
 def room_to_screen(walker, room_pos, inner_pos = None):
-    """
-    Converts a room position to a screen position.
+    """Converts a room position to a screen position.
 
-    @param walker
-        The MazeWalker for which to convert the room position.
-    @param room_pos, inner_pos
-        The room position, and optionally the position within the room. If inner
-        pos is not specified, the centre of the room is used.
-    @return the screen position
+    :param mazeweb.walker.MazeWalke walker: The walker for which to convert the
+        room position.
+
+    :param room_pos: The room position.
+    :type room_pos: (int, int)
+
+    :param inner_pos: The position within the room. If not specified, the centre
+        of the room is used.
+    :type inner_pos: (int, int) or None
+
+    :return: the screen position
     """
     if inner_pos is None:
         inner_pos = tuple(d // 2 + (d & 1) for d in ROOM_SIZE)
@@ -56,15 +63,15 @@ def room_to_screen(walker, room_pos, inner_pos = None):
 
 
 def is_blocked(walker, position):
-    """
-    Determines whether a screen position is blocked by a wall.
+    """Determines whether a screen position is blocked by a wall.
 
-    @param walker
-        The maze walker for which to determine whether the position is blocked.
-    @param position
-        The position to check. This is a character position: the room is
-        determined by checking against ROOM_SIZE.
-    @return whether the position is blocked, or None if the state is unknown
+    :param mazeweb.walker.MazeWalke walker: The walker for which to determine
+        whether the position is blocked.
+
+    :param position: The position to check. This is a character position: the
+        room is determined by checking against :data:`ROOM_SIZE`.
+
+    :return: whether the position is blocked, or `None` if the state is unknown
     """
     room_pos, (rx, ry) = screen_to_room(walker, position)
 
@@ -115,18 +122,18 @@ def is_blocked(walker, position):
 
 
 def paint(win, walker, hrange, vrange):
-    """
-    Paints all known rooms of a maze.
+    """Paints all known rooms of a maze.
 
     The current room and its neighbours are painted highlighted, and other rooms
     with a less distinct colour.
 
-    @param win
-        The curses window to use.
-    @param walker
-        The MazeWalker whose cached rooms to paint.
-    @param hrange, vrange
-        The horizontal and vertical ranges of the maze to paint.
+    :param win: The curses window to use.
+    :param mazeweb.walker.MazeWalke walker: The MazeWalker whose cached rooms to
+        paint.
+
+    :param int hrange: The horizontal range of the maze to paint.
+
+    :param int vrange: The vertical range of the maze to paint.
     """
     my, mx = win.getmaxyx()
 

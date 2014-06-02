@@ -1,6 +1,3 @@
-"""
-The current indentation.
-"""
 _indent = 0
 
 def printf(format, *args):
@@ -9,24 +6,18 @@ def printf(format, *args):
 
 
 class assert_exception(object):
-    """
-    Allows to assert that a block of code raises an exception.
-
-    @raise AssertionError if no exception is raised or the exception was of a
-        correct type but not validated by the checker
+    """Allows to assert that a block of code raises an exception.
     """
     def __init__(self, exception, checker = lambda e: True):
-        """
-        Creates an exception asserter.
+        """Creates an exception asserter.
 
-        @param exception
-            The exception to require. The type of the raised exception is
-            checked against this value with the is operator. If this expression
-            is not True, the actual exception value is checked with the ==
-            operator. This allows exceptions to override __eq__ and thus this
-            parameter to be of any type.
-        @param checker
-            A function to validate an exception once its type has been verified.
+        :param exception: The exception to require. The type of the raised
+            exception is checked against this value with the ``is`` operator and
+            then ``==`` operation. If neither expression is ``True``, the
+            exception is reraised.
+
+        :param checker: A function to validate an exception once its type has
+            been verified.
         """
         self.exception = exception
         self.checker = checker
@@ -49,9 +40,9 @@ class assert_exception(object):
 
 def assert_eq(v1, v2):
     """
-    Asserts that v1 == v2.
+    Asserts that ``v1 == v2``.
 
-    @raise AssertionError if not (v1 == v2)
+    :raises AssertionError: if ``not (v1 == v2)``
     """
     if isinstance(v1, str) and isinstance(v2, str):
         # Handle string comparison specially
@@ -65,23 +56,20 @@ def assert_eq(v1, v2):
 
 
 class Suite(object):
-    """
-    The test suites to run when test.run is called.
+    """The test suites to run when test.run is called.
 
     Use the decorator test to populate this list.
     """
     __suites__ = {}
 
     def __init__(self, name):
-        """
-        Initialises this test suite from a module instance.
+        """Initialises this test suite from a module instance.
 
         No tests are added automatically: when using the @test decorator, a test
         suite will be instantiated for the first decorated function, and all
         following decorated functions will be added to this object.
 
-        @param name
-            The name of this test suite.
+        :param str name: The name of this test suite.
         """
         super(Suite, self).__init__()
         self.tests = []
@@ -95,10 +83,10 @@ class Suite(object):
         return self._name
 
     def run(self):
-        """
-        Runs this test suite.
+        """Runs this test suite.
 
-        @return the failed tests, or None if the suite was cancelled by setup
+        :return: the failed tests, or ``None`` if the suite was cancelled by
+            setup
         """
         printf('Running test suite %s with %d tests...',
             self.name, len(self.tests))
@@ -113,14 +101,14 @@ class Suite(object):
 
     @classmethod
     def _get_test_suite(self, test):
-        """
-        Returns the test suite for a test.
+        """Returns the test suite for a test.
 
         If the suite does not already exist, it is created.
 
-        @param test
-            The test instance.
-        @return the suite instance
+        :param tests.Test test: The test instance.
+
+        :return: the suite instance
+        :rtype: tests.Suite
         """
         # Get the global scope for the function to retrieve the name of the
         # defining module
@@ -136,15 +124,17 @@ class Suite(object):
 
 
 def test(func):
-    """
-    Use this decorator to mark a callable as a test.
+    """Use this decorator to mark a callable as a test.
 
     The description of the test is determined as follows:
-        * If func.description exists, it is used.
-        * If the test function has a docstring, it is used.
-        * Otherwise the function name is split on '_' and then joined with '.'
-          before any part that begins with a capital letter followed by a lower
-          case letter and '_' for any other case.
+
+    * If ``func.description`` exists, it is used.
+
+    * Otherwise, if the test function has a docstring, it is used.
+
+    * Otherwise the function name is split on '_' and then joined with '.'
+      before any part that begins with a capital letter followed by a lower
+      case letter and '_' for any other case.
     """
     test_name = func.name \
         if hasattr(func, 'name') \
@@ -205,14 +195,13 @@ def test(func):
 
 
 def suite(func):
-    """
-    Use this decorator to mark a callable as a full test suite.
+    """Use this decorator to mark a callable as a full test suite.
 
-    The decorated function must return a list of tuples on the format (name,
-    message). Each tuple represents a failed test with the name name and the
-    message message.
+    The decorated function must return a list of tuples on the format
+    ``(name, message)``. Each tuple represents a failed test with the name
+    ``name`` and the message ``message``.
 
-    To signal that the suite was cancelled, return None.
+    To signal that the suite was cancelled, return ``None``.
     """
     class InnerTestResult(object):
         def __init__(self, name, message):
@@ -224,9 +213,6 @@ def suite(func):
             self._name = name
 
         def run(self):
-            """
-            @see Suite.run
-            """
             printf('Running test suite %s...',
                 func.__name__)
             if not getattr(func, 'setup', lambda: True)():
@@ -248,15 +234,13 @@ def suite(func):
 
 
 def _before(func):
-    """
-    Sets a callable to call before the test is run.
+    """Sets a callable to call before the test is run.
 
-    If this function returns False, the test and the after function if set are
-    not run.
+    If this function returns ``False``, the test and the after function if set
+    are not run.
 
-    @param func
-        The function to call before the test is run. This is called with no
-        parameters.
+    :param func: The function to call before the test is run. This is called
+        with no parameters.
     """
     def decorator(test):
         test.test_before = func
@@ -265,13 +249,13 @@ def _before(func):
 test.before = _before
 
 def _after(func):
-    """
-    Sets a callable to call after the test is run. The callable is always
-    called if the before function did not raise an exception or return False.
+    """Sets a callable to call after the test is run.
 
-    @param func
-        The function to call after the test is run. This is called with no
-        parameters.
+    The callable is always called if the before function did not raise an
+    exception or return ``False``.
+
+    :param func: The function to call after the test is run. This is called with
+        no parameters.
     """
     def decorator(test):
         test.test_after = func
@@ -281,8 +265,7 @@ test.after = _after
 
 
 def _setup(func):
-    """
-    Use this decorator to mark a callable as a test suite setup function.
+    """Use this decorator to mark a callable as a test suite setup function.
     """
     Suite._get_test_suite(func)._setup = func
 
@@ -290,8 +273,7 @@ def _setup(func):
 test.setup = _setup
 
 def _teardown(func):
-    """
-    Use this decorator to mark a callable as a test suite teardown function.
+    """Use this decorator to mark a callable as a test suite teardown function.
     """
     Suite._get_test_suite(func)._teardown = func
 
@@ -302,11 +284,10 @@ test.teardown = _teardown
 suite_injectors = []
 
 def injector(f):
-    """
-    A decorator that marks a function as a suite injector function.
+    """A decorator that marks a function as a suite injector function.
 
     Any function that is marked with this decorator will be called with a list
-    of suite_names to inject or None, if all suites are to be injected.
+    of suite_names to inject, or ``None`` if all suites are to be injected.
     """
     global suite_injector
     suite_injectors.append(f)

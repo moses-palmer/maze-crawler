@@ -23,8 +23,7 @@ from mazeweb import app
 
 
 class MazePlugin(object):
-    """
-    A bottle plugin that replaces the keyword argument 'maze' with an actual
+    """A bottle plugin that replaces the keyword argument 'maze' with an actual
     Maze instance stored in the session.
     """
 
@@ -85,14 +84,13 @@ class MazePlugin(object):
 
     @classmethod
     def route(self, method, *args, **kwargs):
-        """
-        A decorator to mark an instance method of a ..plugins.Plugin a route.
+        """A decorator to mark an instance method of a
+        :class:`~mazeweb.plugins.Plugin` a route.
 
         When invoked, the instance is located by finding the plugin with the
-        name of the __plugin_name__ attribute of the defining class.
+        name of the ``__plugin_name__`` attribute of the defining class.
 
-        @param method
-            The HTTP method this method routes.
+        :param str method: The HTTP method this method routes.
         """
         def inner(callback):
             return self.routed(callback, method, *args, **kwargs)

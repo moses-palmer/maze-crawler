@@ -29,8 +29,7 @@ app = bottle.Bottle()
 
 @app.get('/')
 def get_session_cookie():
-    """
-    Simply causes the beaker session cookie to be set.
+    """Simply causes the beaker session cookie to be set.
     """
     session = bottle.request.environ.get('beaker.session')
     session.persist()

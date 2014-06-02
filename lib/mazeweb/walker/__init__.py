@@ -29,15 +29,19 @@ else:
 class MazeWalker(object):
     def __init__(self, host = 'localhost', port = 8080, width = 20,
             height = 15):
-        """
-        Initialises a new maze walker.
+        """Initialises a new maze walker.
 
-        @param host, port
-            The host and port for the maze crawler server.
-        @param width, height
-            The dimensions of the maze.
-        @raise AssertionError if no cookies were retrieved from the server
-        @raise ValueError if the size of the maze created on the server was
+        :param str host: The maze crawler host.
+
+        :param int port: The post.
+
+        :param int width: The width of the maze
+
+        :param int height: The height of the maze.
+
+        :raises AssertionError: if no cookies were retrieved from the server
+
+        :raises ValueError: if the size of the maze created on the server was
             different from the requested size
         """
         self.host, self.port = host, port
@@ -106,12 +110,15 @@ class MazeWalker(object):
         self.current_room, walls = room
 
     def is_reachable(self, room_position):
-        """
-        Returns whether a room is immediately reachable from the current room.
+        """Returns whether a room is immediately reachable from the current
+        room.
 
-        @param room_position
-            The position opf the room.
-        @return whether the room is reachable
+        :param room_position:
+            The position of the room.
+        :type room_position: (int, int)
+
+        :return: whether the room is reachable
+        :rtype: bool
         """
         if room_position == self.position:
             # The current room is reachable
@@ -143,22 +150,23 @@ class MazeWalker(object):
 
     def _update_cache(self, identifier, add_neighbors = True,
             current_room = None):
-        """
-        Retrieves the specified room from the server and updates the cache.
+        """Retrieves the specified room from the server and updates the cache.
 
-        @param identifier
-            The identifier of the room.
-        @param add_neighbors
-            Whether to also request neighbouring rooms. If this is True, every
-            immediately reachable neighbour is also retrieved.
-        @param current_room
+        :param str identifier: The identifier of the room.
+
+        :param bool add_neighbors: Whether to also request neighbouring rooms.
+            If this is ``True``, every immediately reachable neighbour is also
+            retrieved.
+
+        :param dict current_room:
             A value to use as the current room instead of querying the server.
-            This must be compatible with the line representation of a room. If
-            this is None, the server will be queried.
+            This must be a :term:`recursive room dict` or a
+            :term:`non-recursive room dict`. If this is ``None``, the server
+            will be queried.
         """
         def span_to_direction(span):
-            """
-            Transforms a span expressed as an angle pair to a direction vector.
+            """Transforms a span expressed as an angle pair to a direction
+            vector.
             """
             x = math.cos(span.start) + math.cos(span.end)
             y = math.sin(span.start) + math.sin(span.end)
@@ -195,16 +203,17 @@ class MazeWalker(object):
                                 for wall in w.target.walls if wall.target)))
 
     def _req(self, method, path, data = None):
-        """
-        Performs a HTTP request to the server for path.
+        """Performs an HTTP request to the server for path.
 
-        @param method
-            The HTTP method to use.
-        @param path
-            The path.
-        @param data
-            The data to send, or None.
-        @return the JSON decoded response, or None for HTTP status 204
+        :param str method: The HTTP method to use.
+
+        :param str path: The path.
+
+        :param data: The data to send.
+        :type data: dict or None
+
+        :return: the JSON decoded response, or None for HTTP status 204
+        :rtype: dict or None
         """
         headers = {
             'Cookie': self.cookies}
@@ -239,24 +248,24 @@ class MazeWalker(object):
 
     def _get(self, path):
         """
-        @see _req
+        See :meth:`_req`
         """
         return self._req('GET', path)
 
     def _put(self, path, data):
         """
-        @see _req
+        See :meth:`_req`
         """
         return self._req('PUT', path, data)
 
     def _post(self, path, data):
         """
-        @see _req
+        See :meth:`_req`
         """
         return self._req('POST', path, data)
 
     def _delete(self, path):
         """
-        @see _req
+        See :meth:`_req`
         """
         return self._req('DELETE', path)

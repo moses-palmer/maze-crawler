@@ -14,24 +14,23 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
-
-
-
 def randuniq(length, seed = 1):
-    """
-    Generates length unique, pseudo-random numbers.
+    """Generates length unique, pseudo-random numbers.
 
-    @param length
-        The number of numbers to generate. If this is None, an infinite number
-        of numbers will be generated, but they are not necessarily unique.
-    @param seed
-        A seed to use to initialise the pseudo-random generator. Given the same
-        length and same seed, the sequence of the numbers will always be the
-        same. For the same length and different seeds, the sequence will be
-        different as long as seed is smaller than length
-    @return a generator that yields ints
-    @raise ValueError if seed is zero or less, length is negative, zero or
-        greater than 2**31
+    Given the same ``length`` and ``seed``, the sequence of the numbers will
+    always be the same. For the same ``length`` and different ``seed``, the
+    sequence will be different as long as ``seed`` is smaller than ``length``.
+
+    :param int length: The number of numbers to generate. If this is ``None``,
+        an infinite number of numbers will be generated, but they are not
+        necessarily unique.
+
+    :param int seed: A seed to use to initialise the pseudo-random generator.
+
+    :return: a generator that yields a sequence of ``int``
+
+    :raises ValueError: if seed is zero or less, length is negative, zero or
+        greater than ``2**31``
     """
     if seed <= 0:
         raise ValueError('seed is invalid')

@@ -20,41 +20,36 @@ from .. import app, util
 
 @app.get('/maze')
 def maze_get(maze):
-    """
-    Retrieves a description of the current maze.
+    """Retrieves a description of the current maze.
 
-    @response.width
-        The width of the current maze.
-    @response.height
-        The height of the current maze.
-    @response.walls
-        The number of walls for the current maze.
-    @response.start_room
-        The identifier of the room at (0, 0).
-    @response.current_room
-        The identifier of the current room.
+    The response is a :term:`maze dict` describing the new maze.
 
-    @return 204 if no maze has been initialised and 200 otherwise
+    :statuscode 200: the maze description was retrieved
+
+    :statuscode 204: no maze has been initialised
     """
     return util.to_dict(maze)
 
 
 @app.post('/maze')
 def maze_reset():
-    """
-    Resets the current maze and reinitialises it.
+    """Resets the current maze and reinitialises it.
 
-    @request.width
-        The width of the maze. This must be a value greater than 0. This value
-        is optional with a default value of 30.
-    @request.height
-        The height of the maze. This must be a value greater than 0. This value
-        is optional with a default value of 20.
-    @request.walls
-        The number of walls for every room of the maze. This value is optional
-        with a default value of 4.
+    The response is a :term:`maze dict` describing the new maze.
 
-    @return 400 if a parameter is invalid and 200 otherwise
+    :jsonparam int width: The width of the maze. This must be a value greater
+        than ``0``. This value is optional with a default value of ``30``.
+
+    :jsonparam int height: The height of the maze. This must be a value greater
+        than ``0``. This value is optional with a default value of ``20``.
+
+    :jsonparam int walls: The number of walls for every room of the maze. This
+        value is optional with a default value of ``4``. Supported values are
+        ``3``, ``4`` and ``6``.
+
+    :statuscode 200: the maze was successfully reset
+
+    :statuscode 400: a parameter is invalid
     """
     try:
         maze, remaining = util.new(**bottle.request.json)
@@ -69,27 +64,21 @@ def maze_reset():
 
 @app.put('/maze')
 def maze_update():
-    """
-    Updates the maze.
+    """Updates the maze.
 
-    @request.current_room
-        The room to which to move. This room must be immediately reachable from
-        the current room. This parameter is optional.
+    The response is a :term:`maze dict` describing the new maze.
 
-    @response.width
-        The width of the current maze.
-    @response.height
-        The height of the current maze.
-    @response.walls
-        The number of walls for the current maze.
-    @response.start_room
-        The identifier of the room at (0, 0).
-    @response.current_room
-        The identifier of the current room.
+    :jsonparam int current_room: The :term:`room identifier` of the room to
+        which to move. This room must be immediately reachable from the current
+        room. This parameter is optional.
 
-    @return 400 if no maze has been initialised, 403 if the requested room is
-        not immediately reachable, 404 if the requested room does not exist and
-        200 otherwise
+    :statuscode 200: the maze was successfully updated
+
+    :statuscode 400: no maze has been initialised
+
+    :statuscode 403: the requested room is not immediately reachable
+
+    :statuscode 404: the requested room does not exist
     """
     try:
         maze = util.load()
@@ -126,10 +115,9 @@ def maze_update():
 
 @app.delete('/maze')
 def maze_delete():
-    """
-    Deletes the current session.
+    """Deletes the current maze.
 
-    @return 204
+    :statuscode 204: the maze was deleted
     """
     bottle.request.environ.get('beaker.session').delete()
     return bottle.HTTPResponse(status = 204)

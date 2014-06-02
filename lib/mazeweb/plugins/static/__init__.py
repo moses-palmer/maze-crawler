@@ -24,6 +24,11 @@ from mazeweb.crawler.plugin import MazePlugin
 
 @MazePlugin.router
 class StaticPlugin(Plugin):
+    """Serves static files.
+
+    The files are served from the directory ``$MAZEWEB_DATA_DIR``, or if that
+    environment variable is not set, the current directory.
+    """
     __plugin_name__ = 'static'
 
     def __init__(self):
@@ -37,11 +42,11 @@ class StaticPlugin(Plugin):
 
     @MazePlugin.get('/static/<path:path>')
     def get_file(self, path):
-        """
-        Retrieves a static resource.
+        """Retrieves a static resource.
 
-        @param path
-            The path to the static file to retrieve.
+        The response is a file.
+
+        :param path: The path to the static file to retrieve.
         """
         self.res.path = list(reversed(list(self.res.path)))
         abspath = self.res.lookup(path)

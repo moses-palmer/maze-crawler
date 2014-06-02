@@ -1,3 +1,19 @@
+# coding: utf-8
+# mazeweb
+# Copyright (C) 2012-2014 Moses Palmér
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+
 import json
 import os
 
@@ -6,8 +22,9 @@ PLUGINS = {}
 
 from ..util.data import ConfigurationStore
 
-PLUGIN_PATH = os.getenv('MAZEWEB_PLUGIN_PATH', os.path.dirname(__file__))
-__path__ = PLUGIN_PATH.split(os.pathsep) + [os.path.dirname(__file__)]
+PLUGIN_PATH = os.getenv('MAZEWEB_PLUGIN_PATH', None)
+__path__ = (PLUGIN_PATH.split(os.pathsep) if not PLUGIN_PATH is None else []) \
+    + [os.path.dirname(__file__)]
 
 
 class Plugin(object):
@@ -128,7 +145,7 @@ class Plugin(object):
         @raise ValueError if the configuration cannot be read
         """
         # Load the JSON data and stop if it fails
-        filename = os.path.join(os.getenv('MAZEWEB_CONFIG_DIR', ''),
+        filename = os.path.join(os.getenv('MAZEWEB_CONFIG_DIR', '.'),
             'plugins', self.__plugin_name__ + '.json')
         try:
             with open(filename, 'r') as f:

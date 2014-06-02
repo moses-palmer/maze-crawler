@@ -1,3 +1,20 @@
+# coding: utf-8
+# mazeweb
+# Copyright (C) 2012-2014 Moses Palmér
+#
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+
+import functools
 import inspect
 from bottle import abort, install, HTTPResponse, HTTPError
 
@@ -26,6 +43,7 @@ class MazePlugin(object):
         if not 'maze' in argspec and not isinstance(callback, self.routed):
             return callback
 
+        @functools.wraps(callback)
         def wrapper(*args, **kwargs):
             try:
                 argspec = inspect.getargspec(context['callback'])[0]
@@ -54,6 +72,8 @@ class MazePlugin(object):
 
     class routed(object):
         def __init__(self, callback, method, *args, **kwargs):
+            self.__name__ = callback.__name__
+            self.__doc__ = callback.__doc__
             self.callback = callback
             self.method = method
             self.args = args

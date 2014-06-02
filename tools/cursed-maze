@@ -132,7 +132,7 @@ def paint(win, walker, hrange, vrange):
 
     for x in hrange:
         for y in vrange:
-            if x < 0 or x >= mx - 1 or y < 0 or y >= my - 1:
+            if x < 0 or x >= mx - 1 or y < 0 or y >= my:
                 continue
 
             blocked = is_blocked(walker, (x, y))

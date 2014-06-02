@@ -23,7 +23,7 @@ _HOST = 'localhost'
 _BASE_PORT = 8080
 
 # The string that specifies the bottle descriptor for the server application
-_SERVER_APPLICATION = 'mazeweb:app'
+_SERVER_APPLICATION = 'mazeweb:session_app'
 
 def _server_start():
     """
@@ -82,6 +82,22 @@ def _server_stop():
         'The current server is not running'
     connection.close()
     server.kill()
+
+def _server_stop_all_capture():
+    """
+    Installs an atexit hook that kills all remaining servers upon termination.
+    """
+    import atexit
+
+    servers = _servers
+
+    @atexit.register
+    def server_stop_all():
+        for server, connection, cookies in servers:
+            connection.close()
+            server.kill()
+
+_server_stop_all_capture()
 
 
 def _get_connection_data():

@@ -126,6 +126,46 @@ class MazeMapper(object):
                 return None
 
 
+from maze.tri import TriMaze
+
+@MazeMapper.mapper(len(TriMaze.Wall.WALLS))
+class TriMazeMapper(MazeMapper):
+    DIRECTIONS = (TriMaze.Wall.HORIZONTAL, TriMaze.Wall.DIAGONAL_2,
+        TriMaze.Wall.DIAGONAL_1)
+    LAYOUTS = (
+        (
+            '##000##+',
+            '-2   1++',
+            '--2 1+++',
+            '---#++++'),
+        (
+            '---#++++',
+            '--1 2+++',
+            '-1   2++',
+            '##000##+'))
+
+    def room_to_layout(self, room_pos):
+        return self.layout[sum(room_pos) & 1]
+
+    def world_to_room(self, world_pos):
+        room_x = 2 * (world_pos[0] // len(self.LAYOUTS[0][0]))
+        room_y = world_pos[1] // len(self.LAYOUTS[0])
+
+        layout = self.layout[room_y & 1]
+
+        inner_x = world_pos[0] % len(self.LAYOUTS[0][0])
+        inner_y = world_pos[1] % len(self.LAYOUTS[0])
+
+        if layout[inner_y][inner_x] == '-':
+            room_x -= 1
+            inner_x += len(self.LAYOUTS[0][0]) // 2
+        elif layout[inner_y][inner_x] == '+':
+            room_x += 1
+            inner_x -= len(self.LAYOUTS[0][0]) // 2
+
+        return (room_x, room_y), (inner_x, inner_y)
+
+
 from maze.quad import Maze
 
 @MazeMapper.mapper(len(Maze.Wall.WALLS))

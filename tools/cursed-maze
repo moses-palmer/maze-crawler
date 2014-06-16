@@ -6,159 +6,308 @@ import sys
 
 from mazeweb.walker import MazeWalker
 
-#: The size of a room in characters described as (width, height)
-ROOM_SIZE = (4, 3)
 
-#: The mapping from curses keys to directions
-DIRECTIONS = {
-    curses.KEY_LEFT: (-1, 0),
-    curses.KEY_UP: (0, -1),
-    curses.KEY_RIGHT: (1, 0),
-    curses.KEY_DOWN: (0, 1)}
+class MazeMapper(object):
+    MAPPERS = {}
+    @classmethod
+    def mapper(self, walls):
+        """A decorator for registering a ``MazeMapper`` subclass as the mapper
+        for a maze with the specified number of walls.
 
+        :param int walls: The number of walls for which to register the mapper.
 
-def screen_to_room(walker, position):
-    """Converts a screen position to a room position.
+        :return: a decorator
 
-    :param mazeweb.walker.MazeWalke walker: The walker for which to convert the
-        screen position.
+        :raises ValueError: if the decorated object is not a subclass of
+            ``MazeMapper``
+        """
+        def inner(klass):
+            if not issubclass(klass, self):
+                raise ValueError(klass)
+            self.MAPPERS[walls] = klass
 
-    :param position:
-        The screen position.
-    :type position: (int, int)
+        return inner
 
-    :return: the tuple (room_pos, inner_pos), where inner_pos is the position
-        within the room
-    :rtype: ((int, int), (int, int))
-    """
-    inner_pos = (
-        position[0] % ROOM_SIZE[0],
-        ROOM_SIZE[1] - position[1] % ROOM_SIZE[1] - 1)
-    room_pos = (
-        position[0] // ROOM_SIZE[0],
-        walker.maze.height - position[1] // ROOM_SIZE[1] - 1)
-    return (room_pos, inner_pos)
+    @classmethod
+    def for_walker(self, walker):
+        """Returns a mapper for a specific :class:`~mazeweb.walker.MazeWalker`.
 
+        :param mazeweb.walker.MazeWalker walker: The MazeWalker for which to
+            create a mapper.
 
-def room_to_screen(walker, room_pos, inner_pos = None):
-    """Converts a room position to a screen position.
+        :raises KeyError: if the maze type is not supported
+        """
+        return self.MAPPERS[len(walker.maze.Wall.WALLS)](walker)
 
-    :param mazeweb.walker.MazeWalke walker: The walker for which to convert the
-        room position.
+    def __init__(self, walker):
+        """Constructs a mapper for the specified maze walker.
 
-    :param room_pos: The room position.
-    :type room_pos: (int, int)
+        Do not call this constructor directly. Rather, use
+        :meth:`MazeMapper.for_maze` as a factory method.
 
-    :param inner_pos: The position within the room. If not specified, the centre
-        of the room is used.
-    :type inner_pos: (int, int) or None
+        :param mazeweb.walker.MazeWalker walker: The maze walker whose maze to
+            map.
+        """
+        self.walker = walker
 
-    :return: the screen position
-    """
-    if inner_pos is None:
-        inner_pos = tuple(d // 2 + (d & 1) for d in ROOM_SIZE)
-    return (
-        room_pos[0] * ROOM_SIZE[0] + inner_pos[0],
-        (walker.maze.height - room_pos[1]) * ROOM_SIZE[1] - inner_pos[1])
+        self.layout = tuple(
+            tuple(
+                tuple(
+                    False
+                        if square == ' ' else
+                    True
+                        if square == '#' else
+                    self.DIRECTIONS[int(square, 10)]
+                        if square in '0123456789' else
+                    square
+                    for square in line)
+                for line in room)
+            for room in self.LAYOUTS)
 
+    def room_to_layout(self, room_pos):
+        """Returns the layout for the room at room_pos.
 
-def is_blocked(walker, position):
-    """Determines whether a screen position is blocked by a wall.
+        This method must be implemented if ``len(self.layout)`` is not ``1``.
 
-    :param mazeweb.walker.MazeWalke walker: The walker for which to determine
-        whether the position is blocked.
+        :param room_pos: The room position.
+        :type room_pos: (int, int)
 
-    :param position: The position to check. This is a character position: the
-        room is determined by checking against :data:`ROOM_SIZE`.
+        :return: an item from ``self.layout`` for the room
+        """
+        if len(self.layout) == 1:
+            return self.layout[0]
+        else:
+            raise NotImplementedError()
 
-    :return: whether the position is blocked, or `None` if the state is unknown
-    """
-    room_pos, (rx, ry) = screen_to_room(walker, position)
+    def world_to_room(self, world_pos):
+        """Returns the room position and position within the room from a world
+        coordinate.
 
-    # We know nothing about unknown rooms or the outside of the maze
-    try:
-        room = walker[room_pos]
-        if getattr(room, 'identifier', None) is None:
+        :param world_pos: The world position.
+        :type world_pos: (int, int)
+
+        :return: the tuple ``(room_pos, inner_pos)``
+        """
+        raise NotImplementedError()
+
+    def is_blocked(self, world_pos):
+        """Returns whether the specified world position is blocked.
+
+        :param world_pos: The world coordinate to check.
+        :type world_pos: (int, int)
+
+        :return ``True`` if the position is blocked, ``False`` if it is not and
+            ``None`` if it is not known
+        """
+        # Get the room position
+        room_pos, (ix, iy) = self.world_to_room(world_pos)
+
+        # If the room is unknown, we cannot say anything
+        try:
+            if getattr(self.walker.maze[room_pos], 'identifier', None) is None:
+                return None
+        except IndexError as e:
             return None
-    except IndexError:
-        return None
 
-    # Get the directions in which we have doors
-    doors = set(w.direction for w in walker.maze.doors(room_pos))
-    left = (-1, 0) in doors
-    up = (0, 1) in doors
-    right = (1, 0) in doors
-    down = (0, -1) in doors
+        # Get the layout index
+        layout = self.room_to_layout(room_pos)
 
-    if rx == 0:
-        if ry == ROOM_SIZE[1] - 1:
-            # Top left corner
-            return True
-        elif ry == 0:
-            # Bottom left corner
-            return True
+        # Get the value for the square
+        value = layout[iy][ix]
+
+        # If the value is a True or False, it is a square that has a static
+        # value, otherwise we must see if the specified room has a wall
+        if value is False or value is True or value is None:
+            return value
         else:
-            # Left wall
-            return not left
-    elif rx == ROOM_SIZE[0] - 1:
-        if ry == ROOM_SIZE[1] - 1:
-            # Top right corner
-            return True
-        elif rx == ROOM_SIZE[0] - 1 and ry == 0:
-            # Bottom right corner
-            return True
-        else:
-            # Right wall
-            return not right
-    elif ry == ROOM_SIZE[1] - 1:
-        # Top wall
-        return not up
-    elif ry == 0:
-        # Bottom wall
-        return not down
-    else:
-        # Inside room
-        return False
+            try:
+                return not int(value) in self.walker.maze[room_pos]
+            except ValueError:
+                return None
 
 
-def paint(win, walker, hrange, vrange):
+from maze.tri import TriMaze
+
+@MazeMapper.mapper(len(TriMaze.Wall.WALLS))
+class TriMazeMapper(MazeMapper):
+    DIRECTIONS = (TriMaze.Wall.HORIZONTAL, TriMaze.Wall.DIAGONAL_2,
+        TriMaze.Wall.DIAGONAL_1)
+    LAYOUTS = (
+        (
+            '##000##+',
+            '-2   1++',
+            '--2 1+++',
+            '---#++++'),
+        (
+            '---#++++',
+            '--1 2+++',
+            '-1   2++',
+            '##000##+'))
+
+    def room_to_layout(self, room_pos):
+        return self.layout[sum(room_pos) & 1]
+
+    def world_to_room(self, world_pos):
+        room_x = 2 * (world_pos[0] // len(self.LAYOUTS[0][0]))
+        room_y = world_pos[1] // len(self.LAYOUTS[0])
+
+        layout = self.layout[room_y & 1]
+
+        inner_x = world_pos[0] % len(self.LAYOUTS[0][0])
+        inner_y = world_pos[1] % len(self.LAYOUTS[0])
+
+        if layout[inner_y][inner_x] == '-':
+            room_x -= 1
+            inner_x += len(self.LAYOUTS[0][0]) // 2
+        elif layout[inner_y][inner_x] == '+':
+            room_x += 1
+            inner_x -= len(self.LAYOUTS[0][0]) // 2
+
+        return (room_x, room_y), (inner_x, inner_y)
+
+
+from maze.quad import Maze
+
+@MazeMapper.mapper(len(Maze.Wall.WALLS))
+class QuadMazeMapper(MazeMapper):
+    DIRECTIONS = (Maze.Wall.UP, Maze.Wall.LEFT, Maze.Wall.RIGHT, Maze.Wall.DOWN)
+    LAYOUTS = (
+        (
+            '#33#',
+            '1  2',
+            '#00#'),)
+
+    def world_to_room(self, world_pos):
+        room_pos = (
+            world_pos[0] // len(self.LAYOUTS[0][0]),
+            world_pos[1] // len(self.LAYOUTS[0]))
+        inner_pos = (
+            world_pos[0] % len(self.LAYOUTS[0][0]),
+            world_pos[1] % len(self.LAYOUTS[0]))
+        return (room_pos, inner_pos)
+
+
+
+def put_pixel(win, x, y, ch, attr = 0):
+    """Updates a single character on screen.
+
+    This is a wrapper around win.addch which protects agains curses.error and
+    also optimises the calls so that curses.error, which is slightly
+    time-consuming, is not normally raised.
+
+    See :func:`curses.win.addch`.
+    """
+    my, mx = win.getmaxyx()
+    if (False
+            or x < 0
+            or x >= mx - 1
+            or y < 0
+            or y > my):
+        return
+    try:
+        win.addch(y, x, ch, attr)
+    except curses.error as e:
+        pass
+
+
+_view_offset = None
+
+def center_on(win, world_pos):
+    """Centers the screen on a position.
+
+    If the position is near a wall, world_pos may not necessarily be in the
+    centre of the screen.
+
+    :param world_pos: The world coordinate onto which to try to center the
+        virtual view.
+    :type world_pos: (int, int)
+    """
+    global _view_offset
+
+    my, mx = win.getmaxyx()
+    wx, wy = world_pos
+
+    MARGIN = 5
+
+    ox = wx - mx // 2
+    if ox < -MARGIN:
+        ox = -MARGIN
+
+    oy = wy - my // 2
+    if oy < -MARGIN:
+        oy = -MARGIN
+
+    _view_offset = (
+        ox,
+        oy)
+
+def screen_to_world(screen_pos):
+    """
+    Transforms a screen coordinate to a world coordinate.
+
+    The return value may not be inside the maze.
+
+    @param screen_pos
+        The screen position to convert.
+    @return the corresponding world coordinate
+    """
+    global _view_offset
+    return tuple(sp + o for sp, o in zip(screen_pos, _view_offset))
+
+
+def world_to_screen(world_pos):
+    """
+    Transforms a world coordinate to a screen coordinate.
+
+    @param world_pos
+        The world position to convert.
+    @return the corresponding screen coordinate
+    """
+    global _view_offset
+    return tuple(wp - o for wp, o in zip(world_pos, _view_offset))
+
+
+def paint(win, mapper, hrange, vrange):
     """Paints all known rooms of a maze.
 
     The current room and its neighbours are painted highlighted, and other rooms
     with a less distinct colour.
 
     :param win: The curses window to use.
-    :param mazeweb.walker.MazeWalke walker: The MazeWalker whose cached rooms to
-        paint.
+
+    :param MazeMapper mapper: The MazeMapper whose cached rooms to paint.
 
     :param int hrange: The horizontal range of the maze to paint.
 
     :param int vrange: The vertical range of the maze to paint.
     """
-    my, mx = win.getmaxyx()
+    # Make sure the ranges are lists
+    hrange, vrange = list(hrange), list(vrange)
 
-    for x in hrange:
-        for y in vrange:
-            if x < 0 or x >= mx - 1 or y < 0 or y >= my:
-                continue
+    for sx in hrange:
+        for sy in vrange:
+            world_pos = screen_to_world((sx, sy))
 
-            blocked = is_blocked(walker, (x, y))
-            room_pos, inner_pos = screen_to_room(walker, (x, y))
-            reachable = walker.is_reachable(room_pos)
+            # Determine the corresponding room
+            room_pos, inner_pos = mapper.world_to_room(world_pos)
 
-            if blocked:
+            # Determine whether the world position is blocked, and whether the
+            # room is reachable
+            blocked = mapper.is_blocked(world_pos)
+            reachable = mapper.walker.is_reachable(room_pos)
+
+            if blocked is True:
                 flags = curses.A_REVERSE
                 character = ' '
-            elif blocked is None:
-                flags = curses.A_NORMAL
-                character = '#'
-            else:
+            elif blocked is False:
                 flags = curses.A_NORMAL
                 character = ' '
+            else:
+                flags = curses.A_NORMAL
+                character = '%'
 
-            win.addch(
-                y,
-                x,
+            put_pixel(win,
+                sx, sy,
                 character,
                 flags | curses.color_pair(0 if reachable else 1))
 
@@ -168,20 +317,42 @@ def wrapped_main(win):
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_WHITE, -1)
 
-    # Create a maze walker
+    try:
+        walls = int(sys.argv[1])
+    except IndexError:
+        walls = 4
+
+    # Create a maze walker and mapper
     my, mx = win.getmaxyx()
     walker = MazeWalker(
-        width = mx // ROOM_SIZE[0],
-        height = my // ROOM_SIZE[1])
+        width = mx // 4,
+        height = my // 3,
+        walls = walls)
+    mapper = MazeMapper.for_walker(walker)
 
-    position = room_to_screen(walker, walker.position)
+    wposition = (len(mapper.layout[0][0]) // 2, len(mapper.layout[0]) // 2)
 
     while True:
+        # The mapping from curses keys to directions
+        DIRECTIONS = {
+            curses.KEY_LEFT: (-1, 0),
+            curses.KEY_UP: (0, -1),
+            curses.KEY_RIGHT: (1, 0),
+            curses.KEY_DOWN: (0, 1)}
+
         # Paint the maze
-        paint(win, walker,
+        center_on(win, tuple(p for p in wposition))
+        paint(win, mapper,
             range(mx),
             range(my))
-        win.addch(position[1], position[0], '#')
+
+        room_pos, inner_pos = mapper.world_to_room(wposition)
+
+        # Add the marker
+        screen_pos = world_to_screen(wposition)
+        put_pixel(win,
+            screen_pos[0], screen_pos[1],
+            '#')
         win.refresh()
 
         c = win.getch()
@@ -191,21 +362,25 @@ def wrapped_main(win):
             break
 
         elif c in DIRECTIONS:
-            next_position = tuple(position + direction
-                for position, direction in zip(position, DIRECTIONS[c]))
-            next_room, inner_pos = screen_to_room(walker, next_position)
+            wnext_position = tuple(wxy + direction
+                for wxy, direction in zip(wposition, DIRECTIONS[c]))
+            rnext_room, inner_pos = mapper.world_to_room(wnext_position)
 
-            blocked = is_blocked(walker, next_position)
-            if blocked is False:
-                if next_room != walker.position:
-                    # Walking between rooms
-                    try:
-                        walker.position = next_room
-                    except:
-                        curses.flash()
-                        continue
+            # Try to move the marker
+            blocked = mapper.is_blocked(wnext_position)
+            if not blocked is False:
+                continue
 
-                position = next_position
+            # If the marker reaches a new room, we must update the maze walker
+            if rnext_room != walker.position:
+                # Walking between rooms
+                try:
+                    walker.position = rnext_room
+                except:
+                    curses.flash()
+                    continue
+
+            wposition = wnext_position
 
 
 def main():

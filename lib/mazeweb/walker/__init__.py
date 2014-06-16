@@ -32,7 +32,7 @@ else:
 
 class MazeWalker(object):
     def __init__(self, host = 'localhost', port = 8080, width = 20,
-            height = 15):
+            height = 15, **options):
         """Initialises a new maze walker.
 
         :param str host: The maze crawler host.
@@ -69,7 +69,8 @@ class MazeWalker(object):
         # Initialise a new maze and get its properties
         data = self._post('/maze', dict(
             width = width,
-            height = height))
+            height = height,
+            **options))
         if data.width != width or data.height != height:
             raise ValueError('Failed to create a maze with dimensions %s' % (
                 str((width, height))))

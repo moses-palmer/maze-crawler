@@ -317,11 +317,17 @@ def wrapped_main(win):
     curses.use_default_colors()
     curses.init_pair(1, curses.COLOR_WHITE, -1)
 
+    try:
+        walls = int(sys.argv[1])
+    except IndexError:
+        walls = 4
+
     # Create a maze walker and mapper
     my, mx = win.getmaxyx()
     walker = MazeWalker(
         width = mx // 4,
-        height = my // 3)
+        height = my // 3,
+        walls = walls)
     mapper = MazeMapper.for_walker(walker)
 
     wposition = (len(mapper.layout[0][0]) // 2, len(mapper.layout[0]) // 2)

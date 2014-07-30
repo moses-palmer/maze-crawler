@@ -130,13 +130,8 @@ class MazePlugin(object):
                 app.route(method = item.method, *item.args, **item.kwargs)(item)
 
             except (AttributeError, TypeError):
-                print item
                 import traceback
                 traceback.print_exc()
-
-            except:
-                print item
-                raise
 
         return router_class
 

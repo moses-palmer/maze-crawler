@@ -44,7 +44,11 @@ class MazePlugin(object):
         try:
             return inspect.getargspec(callback)[0]
         except TypeError:
-            return inspect.getargspec(callback.callback)[0]
+            try:
+                return inspect.getargspec(callback.callback)[0]
+            except TypeError:
+                # Assume callback is a classmethod if we cannot get argspec
+                return inspect.getargspec(callback.callback.__func__)[0]
 
     def apply(self, callback, context):
         # Check whether the route accepts the 'maze' keyword argument; ignore it
@@ -55,18 +59,26 @@ class MazePlugin(object):
 
         @functools.wraps(callback)
         def wrapper(*args, **kwargs):
-            argspec = self._get_argspec(context)
+            try:
+                maze = util.load()
+            except HTTPResponse as e:
+                maze = None
 
             # If the route is a plugin route, make sure to pass the plugin as
             # the self parameter
             if isinstance(callback, self.routed):
-                try:
-                    maze = util.load()
-                    args = (maze.plugins[callback.plugin_name],) + args
-                except (HTTPResponse, KeyError):
+                if callback.is_classmethod:
+                    args = (callback.plugin_class,) + args
+                elif maze:
+                    try:
+                        args = (maze.plugins[callback.plugin_name],) + args
+                    except KeyError:
+                        abort(404)
+                else:
                     abort(404)
-            else:
-                maze = util.load()
+
+            elif not maze:
+                abort(204)
 
             # Add the maze to the parameter list if required
             if 'maze' in argspec:
@@ -79,13 +91,26 @@ class MazePlugin(object):
 
     class routed(object):
         def __init__(self, callback, method, *args, **kwargs):
-            self.__name__ = callback.__name__
+            # Assume callback is a classmethod if __name__ is not set
+            try:
+                self.__name__ = callback.__name__
+                self.is_classmethod = False
+                self.callback = callback
+            except AttributeError:
+                self.__name__ = callback.__func__.__name__
+                self.is_classmethod = True
+                self.callback = callback.__func__
+
             self.__doc__ = callback.__doc__
-            self.callback = callback
             self.method = method
             self.args = args
             self.kwargs = kwargs
-            self.plugin_name = None
+            self.plugin_class = None
+
+        @property
+        def plugin_name(self):
+            """The name of the routed plugin"""
+            return self.plugin_class.__plugin_name__
 
         def __call__(self, *args, **kwargs):
             return self.callback(*args, **kwargs)
@@ -131,8 +156,8 @@ class MazePlugin(object):
                 if not isinstance(item, self.routed):
                     continue
 
-                # Set the plugin name
-                item.plugin_name = router_class.__plugin_name__
+                # Set the plugin class
+                item.plugin_class = router_class
 
                 # Add the attribute as a bottle route
                 app.route(method = item.method, *item.args, **item.kwargs)(item)

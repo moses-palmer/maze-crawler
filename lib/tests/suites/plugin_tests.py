@@ -212,3 +212,32 @@ def plugins_check_routes2():
     status, data = get('/router-silent/test_value')
     assert status == 404, \
         'GET responded %d, not %d' % (status, 404)
+
+@webtest
+def plugins_check_routes3():
+    """Tests that maze plugin routes that are not classmethods are not available
+    when no maze is initialised"""
+    status, data = get('/router-classmethod/instancemethod')
+    assert status == 404, \
+        'GET responded %d, not %d' % (status, 404)
+
+    maze_reset()
+
+    status, data = get('/router-classmethod/instancemethod')
+    assert status == 200, \
+        'GET responded %d, not %d' % (status, 200)
+
+
+@webtest
+def plugins_check_routes4():
+    """Tests that maze plugin routes that are not classmethods are not available
+    when no maze is initialised"""
+    status, data = get('/router-classmethod/classmethod')
+    assert status == 200, \
+        'GET responded %d, not %d' % (status, 200)
+
+    maze_reset()
+
+    status, data = get('/router-classmethod/classmethod')
+    assert status == 200, \
+        'GET responded %d, not %d' % (status, 200)

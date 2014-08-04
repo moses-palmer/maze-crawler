@@ -14,88 +14,100 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <http://www.gnu.org/licenses/>.
 
-class JSONWrapper(object):
-    """A wrapper around JSON serialisable types to allow access to
-    ``obj['key']['other']`` as ``obj.key.other``.
+class DictWrapper(dict):
+    """A wrapper for :class:`dict` in configurations.
 
-    A JSONWrapper behaves like its contained object in other respects.
+    This class allows accessing values using ``self.key``. If ``key`` is not in
+    ``self``, and instance of :class:`NoneWrapper` is returned.
 
-    If the value needs to be stored and is a list or a dict, it is a good idea
-    to store the return value from dict(wrapper) or list(wrapper) instead.
+    Values can also be accessed by calling this instance thus:
+    ``self('path.to.key', default_value)``.
+
+    Values read using ``self.key`` and using calling are wrapped using
+    :func:`wrap`.
     """
-    def __init__(self, d):
-        self._d = d
-
-        # Iterate over all attributes of the value
-        for aname in dir(d):
-            # Set all magic functions to proxy functions
-            value = getattr(d, aname)
-            if callable(value) \
-                    and aname.startswith('__') and aname.endswith('__') \
-                    and not aname in (
-                        '__class__',
-                        '__cmp__',
-                        '__getattr__',
-                        '__getitem__',
-                        '__hash__'):
-                setattr(self, aname,
-                    lambda *args, **kwargs:
-                        value(*args, **kwargs))
-
-    def __lt__(self, other):
-        return self._d < other
-
-    def __gt__(self, other):
-        return self._d > other
-
-    def __eq__(self, other):
-        return self._d == other
-
     def __getattr__(self, key):
-        value = self._d[key]
-        if isinstance(value, (dict, list)):
-            return JSONWrapper(value)
-        else:
-            return value
-    __getitem__ = __getattr__
-
-    def __hash__(self):
         try:
-            return self._d.__hash__()
-        except AttributeError:
-            return id(self._d)
+            return wrap(self[key])
+        except KeyError:
+            return NoneWrapper()
 
-    def __str__(self):
-        return str(self._d)
-
-
-class ConfigurationStore(JSONWrapper):
-    """A ConfigurationStore is a :class:`mazeweb.utils.data.JSONWrapper` that
-    also supports to be called.
-
-    The parameters when calling are described in __call__.
-    """
     def __call__(self, path, default = None):
-        """When calling a configuration store, a named configuration value is
-        retrieved, or a default value if no value is stored.
-
-        :param str path: The path to the configuration value. This is a list of
-            names separated by '.'. The path is split on '.', and every part is
-            used as key recursively from the configuration root to find the
-            result.
-
-        :param default: The value to return if a part does not exist.
-
-        :raises TypeError: if an item along the way does not support
-            ``item['k']``
-        """
-        v = self._d
+        v = self
         for part in path.split('.'):
             try:
                 v = v[part]
             except KeyError:
-                return default
-        if isinstance(v, (list, dict)):
-            return ConfigurationStore(v)
-        else:
-            return v
+                return wrap(default)
+        return wrap(v)
+
+class ListWrapper(list):
+    """A wrapper for :class:`list` in configurations.
+
+    When reading an index that does not exist, an instance of
+    :class:`NoneWrapper` is returned.
+
+    Values read using ``self[index]`` and ``for item in self`` are wrapped using
+    :func:`wrap`.
+    """
+    def __getitem__(self, key):
+        try:
+            return wrap(super(ListWrapper, self).__getitem__(key))
+        except IndexError:
+            return NoneWrapper()
+
+    def __iter__(self):
+        for v in super(ListWrapper, self).__iter__():
+            yield wrap(v)
+
+class NoneWrapper(object):
+    """A wrapper for missing values in configurations.
+
+    When reading ``self.key`` or ``self[index]``, a new instance of NoneWrapper
+    is returned.
+    """
+    def __getattr__(self, key):
+        return NoneWrapper()
+    __getitem__ = __getattr__
+    __bool__ = __nonzero__ = lambda self: False
+
+
+def wrap(v):
+    """Wraps a primitive value.
+
+    When called on an instance of :class:`dict`, this function will return a
+    :class:`DictWrapper`.
+
+    When called on an instance of :class:`list`, this function will return a
+    :class:`ListWrapper`.
+
+    When called on ``None``, this function will return a :class:`NoneWrapper`.
+
+    :param v: The value to wrap.
+    """
+    if v is None:
+        return NoneWrapper()
+    elif isinstance(v, dict):
+        return DictWrapper(v)
+    elif isinstance(v, list):
+        return ListWrapper(v)
+    else:
+        return v
+
+
+def unwrap(v, default = None):
+    """Unwraps a wrapped value.
+    """
+    if isinstance(v, NoneWrapper):
+        return default
+    elif isinstance(v, DictWrapper):
+        return dict(v.items())
+    elif isinstance(v, ListWrapper):
+        return [unwrap(item) for item in v]
+    else:
+        return v
+
+
+JSONWrapper = wrap
+
+ConfigurationStore = DictWrapper

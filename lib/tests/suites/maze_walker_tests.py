@@ -2,7 +2,7 @@ from ._util import webtest
 
 from .. import assert_exception
 
-from cursedmaze import MazeWalker
+from mazeweb.walker import MazeWalker
 
 @webtest
 def MazeWalker_init0():

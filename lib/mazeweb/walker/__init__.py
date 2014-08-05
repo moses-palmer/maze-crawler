@@ -139,16 +139,16 @@ class MazeWalker(object):
             return self.maze.connected(self.position, room_position)
 
     def walk_to(self, room_position):
-        """
-        Walks from the current room to room_position.
+        """Walks from the current room to ``room_position``.
 
         The result is a generator that yields all room positions from the
-        current room to the target room. The underlying Maze is used to find the
+        current room to the target room. The underlying maze is used to find the
         path, so more rooms than on the path may be visited.
 
-        @param room_position
-            The position of the room to which to walk.
-        @raise ValueError if room_position is outside of the maze or the rooms
+        :param room_position: The position of the room to which to walk.
+        :type room_position: (int, int)
+
+        :raises ValueError: if room_position is outside of the maze or the rooms
             are not connected
         """
         def visitor(room_pos):

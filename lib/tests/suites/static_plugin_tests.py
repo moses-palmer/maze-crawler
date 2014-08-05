@@ -36,3 +36,15 @@ def static_get2():
     assert data.strip() == 'Valid data', \
         'Shadowing file did not take precedence: %s' % (
             data)
+
+
+@webtest
+def static_get3():
+    """GET resource and verify that later specified source directory takes
+    precedence"""
+    status, data = get('/static/hello.json')
+    assert status == 200, \
+        'GET /static/hello.json returned %d, not 200' % status
+
+    assert data.hello == 'world', \
+        'GET /static/hello.json returned %s' % str(data)

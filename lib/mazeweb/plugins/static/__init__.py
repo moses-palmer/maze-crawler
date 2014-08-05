@@ -18,7 +18,7 @@ this program. If not, see <http://www.gnu.org/licenses/>.
 import os
 
 from .. import Plugin
-from bottle import HTTPResponse, ResourceManager, static_file
+from bottle import HTTPResponse, static_file
 from mazeweb.crawler.plugin import MazePlugin
 
 
@@ -31,16 +31,31 @@ class StaticPlugin(Plugin):
     """
     __plugin_name__ = 'static'
 
-    def __init__(self):
-        super(StaticPlugin, self).__init__()
-        self.res = ResourceManager(
-            base = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'), '.'))
+    _PATHS = None
 
-        # Add all configured paths
-        for path in self.configuration.paths:
-            self.res.add_path(os.path.join(path, '.'))
+    @classmethod
+    def initialize(self):
+        super(StaticPlugin, self).initialize()
+        self._PATHS = []
+        for path in self.CONFIGURATION('paths', []):
+            self.add_path(path)
+
+    @classmethod
+    def add_path(self, path):
+        """Adds a path to the lookup paths for static files.
+
+        :param str path: The path to add. If this is not an absolute path, it is
+            resolved against ``$MAZEWEB_DATA_DIR``. If the path is already
+            registered, no action is taken.
+        """
+        if not os.path.isabs(path):
+            path = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'), path)
+
+        if not path in self._PATHS:
+            self._PATHS.insert(0, path)
 
     @MazePlugin.get('/static/<path:path>')
+    @classmethod
     def get_file(self, path):
         """Retrieves a static resource.
 
@@ -48,10 +63,8 @@ class StaticPlugin(Plugin):
 
         :param path: The path to the static file to retrieve.
         """
-        self.res.path = list(reversed(list(self.res.path)))
-        abspath = self.res.lookup(path)
-        self.res.path = list(reversed(list(self.res.path)))
-        if not abspath is None:
-            return static_file(path, abspath[:-len(path)])
-        else:
-            return HTTPResponse(status = 404)
+        for root in self._PATHS:
+            if os.path.isfile(os.path.join(root, path)):
+                return static_file(path, root)
+
+        return HTTPResponse(status = 404)

@@ -6,7 +6,7 @@ import sys
 import time
 
 from .. import test
-from mazeweb.util.data import JSONWrapper
+from mazeweb.util.data import wrap
 
 if sys.version_info.major < 3:
     from httplib import CannotSendRequest, HTTPConnection
@@ -127,7 +127,7 @@ def _get_response_data(response):
     @return the response data
     """
     if response.getheader('Content-Type') == 'application/json':
-        return JSONWrapper(json.loads(response.read().decode('ascii')))
+        return wrap(json.loads(response.read().decode('ascii')))
     else:
         return response.read().decode('ascii')
 

@@ -108,6 +108,4 @@ def unwrap(v, default = None):
         return v
 
 
-JSONWrapper = wrap
-
 ConfigurationStore = DictWrapper

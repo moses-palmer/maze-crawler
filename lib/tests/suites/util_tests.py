@@ -115,7 +115,7 @@ def wrap_getattr():
 
 
 @test
-def ConfigurationStore_call():
+def ConfigurationStore_call0():
     """Tests that calling a ConfigurationStore works"""
     w = ConfigurationStore(dict(
         a_boolean = True,
@@ -136,4 +136,20 @@ def ConfigurationStore_call():
     assert w('a_dict.key') == 'next', \
         'Access failed'
     assert w('a_dict.another_dict') == {'the': 'end'}, \
+        'Access failed'
+
+
+@test
+def ConfigurationStore_call1():
+    """Tests that calling a ConfigurationStore with default values works"""
+    w = ConfigurationStore(dict(
+        a_dict = dict(
+            another_dict = dict(
+                the = 'end'))))
+
+    assert w('a_boolean', True) == True, \
+        'Access failed'
+    assert w('a_number', 42) == 42, \
+        'Access failed'
+    assert w('a_dict.key', 'next') == 'next', \
         'Access failed'

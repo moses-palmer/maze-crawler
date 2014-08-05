@@ -20,7 +20,7 @@ import os
 #: The available plugin classes
 PLUGINS = {}
 
-from ..util.data import ConfigurationStore
+from ..util.data import ConfigurationStore, wrap, unwrap
 
 PLUGIN_PATH = os.getenv('MAZEWEB_PLUGIN_PATH', None)
 __path__ = (PLUGIN_PATH.split(os.pathsep) if not PLUGIN_PATH is None else []) \
@@ -101,6 +101,7 @@ class Plugin(object):
             self.name)
         if not os.path.isdir(self.cache_dir):
             os.makedirs(self.cache_dir)
+        self._configuration = None
 
     @property
     def name(self):
@@ -121,7 +122,9 @@ class Plugin(object):
     def configuration(self):
         """The plugin configuration as a
         :class:`~mazeweb.util.data.ConfigurationStore`"""
-        return self.CONFIGURATION
+        if self._configuration is None:
+            self._configuration = ConfigurationStore(unwrap(self.CONFIGURATION))
+        return self._configuration
 
     @classmethod
     def load_configuration(self):

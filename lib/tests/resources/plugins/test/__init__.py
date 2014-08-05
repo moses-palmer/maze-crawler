@@ -82,7 +82,6 @@ class RouterPlugin1(Plugin):
 
     @MazePlugin.get('/router-echo/<value>')
     def get_test(self, value):
-        print self.__class__.__name__
         return {'value': value}
 
 @MazePlugin.router
@@ -92,7 +91,6 @@ class RouterPlugin2(Plugin):
 
     @MazePlugin.get('/router-silent/<value>')
     def get_test(self, value):
-        print self.__class__.__name__
         return {'value': value}
 
 @MazePlugin.router
@@ -101,5 +99,4 @@ class RouterPlugin3(Plugin):
 
     @MazePlugin.get('/router-blocker/<value>')
     def get_test(self, value):
-        print self.__class__.__name__
         return {'value': value}

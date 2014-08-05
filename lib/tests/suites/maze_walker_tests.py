@@ -2,7 +2,7 @@ from ._util import webtest
 
 from .. import assert_exception
 
-from cursedmaze import MazeWalker
+from mazeweb.walker import MazeWalker
 
 @webtest
 def MazeWalker_init0():
@@ -17,8 +17,8 @@ def MazeWalker_init1():
     mw = MazeWalker(width = 5, height = 5)
 
     assert mw.maze.width == 5 and mw.maze.height == 5, \
-        'Failed to create a maze with dimensions %S: it was %s' % (
-            str((width, height)), str((mw.width, mw.height)))
+        'Failed to create a maze with dimensions %s: it was %s' % (
+            str((5, 5)), str((mw.maze.width, mw.maze.height)))
 
 
 @webtest

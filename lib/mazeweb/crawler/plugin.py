@@ -28,26 +28,34 @@ class MazePlugin(object):
     """
 
     name = 'maze'
+    api = 2
 
     def __init__(self):
         pass
 
+    def _get_argspec(self, context):
+        """Returns the argspec of a context.
+
+        :param bottle.Route context: The context, which is a route object.
+
+        :return: an argument spec
+        """
+        callback = context.callback
+        try:
+            return inspect.getargspec(callback)[0]
+        except TypeError:
+            return inspect.getargspec(callback.callback)[0]
+
     def apply(self, callback, context):
         # Check whether the route accepts the 'maze' keyword argument; ignore it
         # if it does not and is not a decorated plugin method
-        try:
-            argspec = inspect.getargspec(context['callback'])[0]
-        except TypeError:
-            argspec = inspect.getargspec(context['callback'].callback)[0]
+        argspec = self._get_argspec(context)
         if not 'maze' in argspec and not isinstance(callback, self.routed):
             return callback
 
         @functools.wraps(callback)
         def wrapper(*args, **kwargs):
-            try:
-                argspec = inspect.getargspec(context['callback'])[0]
-            except TypeError:
-                argspec = inspect.getargspec(context['callback'].callback)[0]
+            argspec = self._get_argspec(context)
 
             # If the route is a plugin route, make sure to pass the plugin as
             # the self parameter
@@ -130,13 +138,8 @@ class MazePlugin(object):
                 app.route(method = item.method, *item.args, **item.kwargs)(item)
 
             except (AttributeError, TypeError):
-                print item
                 import traceback
                 traceback.print_exc()
-
-            except:
-                print item
-                raise
 
         return router_class
 

@@ -229,15 +229,9 @@ def maze_update6():
         'Not all walls had details'
 
     try:
-        def has_target(wall):
-            try:
-                target = wall.target.identifier
-                return  True
-            except (AttributeError, KeyError):
-                return False
         next_room = next(wall.target.identifier
             for wall in data.current_room.walls
-            if has_target(wall))
+            if bool(wall.target.identifier))
     except StopIteration as e:
         raise AssertionError('No walls had details')
     print str(next_room)

@@ -18,7 +18,7 @@ import json
 import math
 import sys
 
-from mazeweb.util.data import JSONWrapper
+from mazeweb.util.data import wrap, unwrap
 
 from maze.hex import HexMaze
 from maze.quad import Maze
@@ -221,7 +221,8 @@ class MazeWalker(object):
         for wall in self.maze.walls(room_pos):
             try:
                 if not self.maze.edge(wall):
-                    self.maze[room_pos][wall] = next(not w.target is None
+                    self.maze[room_pos][wall] = next(
+                        not unwrap(w.target) is None
                         for w in data.walls
                         if w.span.start == wall.span[0])
             except StopIteration:
@@ -274,7 +275,7 @@ class MazeWalker(object):
                     or not data), \
                 'The server did not respond with JSON data'
 
-            return JSONWrapper(json.loads(data)) \
+            return wrap(json.loads(data)) \
                 if response.status == 200 else None
         finally:
             response.close()

@@ -20,7 +20,7 @@ import os
 #: The available plugin classes
 PLUGINS = {}
 
-from ..util.data import ConfigurationStore
+from ..util.data import ConfigurationStore, wrap, unwrap
 
 PLUGIN_PATH = os.getenv('MAZEWEB_PLUGIN_PATH', None)
 __path__ = (PLUGIN_PATH.split(os.pathsep) if not PLUGIN_PATH is None else []) \
@@ -101,6 +101,7 @@ class Plugin(object):
             self.name)
         if not os.path.isdir(self.cache_dir):
             os.makedirs(self.cache_dir)
+        self._configuration = None
 
     @property
     def name(self):
@@ -121,32 +122,46 @@ class Plugin(object):
     def configuration(self):
         """The plugin configuration as a
         :class:`~mazeweb.util.data.ConfigurationStore`"""
-        return self.CONFIGURATION
+        if self._configuration is None:
+            self._configuration = ConfigurationStore(unwrap(self.CONFIGURATION))
+        return self._configuration
 
     @classmethod
     def load_configuration(self):
         """Loads the configuration for this plugin and caches it in the class.
 
-        The configuration is read from the file
-        ``$MAZEWEB_CONFIG_DIR/<self.__plugin_name__>.json``. If this file does
-        not exist, ``ValueError`` is raised.
+        The configuration is read from the directories in
+        ``$MAZEWEB_CONFIG_DIR`` as
+        ``$MAZEWEB_CONFIG_DIR_PART/<self.__plugin_name__>.json``. The first file
+        found is used. ``$MAZEWEB_CONFIG_DIR`` is split on :attr:`os.pathsep`.
 
         If the environment variable ``$MAZEWEB_CONFIG_DIR`` is not set, the
-        configuration will be loaded from the current directory.
+        current directory will be used as ``$config_dir``.
 
         The value cached is a :class:`~mazeweb.util.data.ConfigurationStore`.
 
         :raises ValueError: if the configuration cannot be read
         """
-        # Load the JSON data and stop if it fails
-        filename = os.path.join(os.getenv('MAZEWEB_CONFIG_DIR', '.'),
-            'plugins', self.__plugin_name__ + '.json')
-        try:
-            with open(filename, 'r') as f:
-                data = json.load(f)
-        except IOError:
-            raise ValueError('Plugin %s does not have a configuration at %s' % (
-                self.__name__, filename))
+        # Iterate over all directories in $MAZEWEB_CONFIG_DIR
+        configuration_dirs = os.getenv('MAZEWEB_CONFIG_DIR', '.').split(
+            os.pathsep)
+
+        has_configuration = False
+        for configuration_dir in configuration_dirs:
+            # Load the JSON data and continue if it fails
+            filename = os.path.join(configuration_dir,
+                'plugins', self.__plugin_name__ + '.json')
+            try:
+                with open(filename, 'r') as f:
+                    data = json.load(f)
+                has_configuration = True
+                break
+            except IOError:
+                pass
+
+        if not has_configuration:
+            raise ValueError('Plugin %s does not have a configuration at %s',
+                self.__name__, filename)
 
         # Wrap the configuration to make access easy
         self.CONFIGURATION = ConfigurationStore(data)

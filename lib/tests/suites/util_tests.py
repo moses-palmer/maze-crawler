@@ -1,5 +1,5 @@
 from mazeweb.util.numeric import randuniq
-from mazeweb.util.data import JSONWrapper, ConfigurationStore
+from mazeweb.util.data import wrap, ConfigurationStore
 
 from .. import test, assert_exception
 
@@ -47,52 +47,52 @@ def numeric_randuniq4():
 
 
 @test
-def JSONWrapper_cmp():
+def wrap_cmp():
     """Tests comparison for standard types"""
-    assert JSONWrapper(5) == 5, \
+    assert wrap(5) == 5, \
         'Comparison == with number failed'
 
-    assert JSONWrapper(5) < 6, \
+    assert wrap(5) < 6, \
         'Comparison < with number failed'
 
-    assert JSONWrapper(7) > 6, \
+    assert wrap(7) > 6, \
         'Comparison > with number failed'
 
-    assert JSONWrapper(True) == True, \
+    assert wrap(True) == True, \
         'Comparison with bool failed'
 
-    assert JSONWrapper('Hello World!') == 'Hello World!', \
+    assert wrap('Hello World!') == 'Hello World!', \
         'Comparison with string failed'
 
-    assert JSONWrapper([1, 2, 3, 'four']) == [1, 2, 3, 'four'], \
+    assert wrap([1, 2, 3, 'four']) == [1, 2, 3, 'four'], \
         'Comparison with list failed'
 
-    assert JSONWrapper({1: 'one', 2: 'two'}) == {1: 'one', 2: 'two'}, \
+    assert wrap({1: 'one', 2: 'two'}) == {1: 'one', 2: 'two'}, \
         'Comparison with dict failed'
 
 
 @test
-def JSONWrapper_hash():
-    """Tests that using JSONWrappers as keys works as expected"""
+def wrap_hash():
+    """Tests that using wrapped values as keys works as expected"""
     m = {}
 
-    m[JSONWrapper(5)] = 5
+    m[wrap(5)] = 5
     assert m.get(5, None) == 5, \
         'Hashing of number failed (keys: %s)' % m.keys()
 
-    m[JSONWrapper(True)] = True
+    m[wrap(True)] = True
     assert m.get(True, None) == True, \
         'Hashing of boolean failed'
 
-    m[JSONWrapper('A string')] = 'The string'
+    m[wrap('A string')] = 'The string'
     assert m.get('A string', None) == 'The string', \
         'Hashing of string failed'
 
 
 @test
-def JSONWrapper_getattr():
-    """Tests that JSONWrappers allows for easy attribute retrieval"""
-    w = JSONWrapper(dict(
+def wrap_getattr():
+    """Tests that wraps allows for easy attribute retrieval"""
+    w = wrap(dict(
         a_boolean = True,
         a_number = 42,
         a_string = 'Some string',
@@ -115,7 +115,7 @@ def JSONWrapper_getattr():
 
 
 @test
-def ConfigurationStore_call():
+def ConfigurationStore_call0():
     """Tests that calling a ConfigurationStore works"""
     w = ConfigurationStore(dict(
         a_boolean = True,
@@ -136,4 +136,20 @@ def ConfigurationStore_call():
     assert w('a_dict.key') == 'next', \
         'Access failed'
     assert w('a_dict.another_dict') == {'the': 'end'}, \
+        'Access failed'
+
+
+@test
+def ConfigurationStore_call1():
+    """Tests that calling a ConfigurationStore with default values works"""
+    w = ConfigurationStore(dict(
+        a_dict = dict(
+            another_dict = dict(
+                the = 'end'))))
+
+    assert w('a_boolean', True) == True, \
+        'Access failed'
+    assert w('a_number', 42) == 42, \
+        'Access failed'
+    assert w('a_dict.key', 'next') == 'next', \
         'Access failed'

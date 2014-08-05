@@ -157,7 +157,8 @@ class MazeWalker(object):
                 for transit_room_pos in self.maze.walk_path(
                         self.position, room_pos):
                     self.position = transit_room_pos
-            self.position = room_pos
+            else:
+                self.position = room_pos
 
         return reversed(list(
             self.maze.walk_path(room_position, self.position, visitor)))

@@ -30,6 +30,10 @@ __path__ = (PLUGIN_PATH.split(os.pathsep) if not PLUGIN_PATH is None else []) \
 class Plugin(object):
     """A class describing the interface to plugin modules.
     """
+
+    #: The name of this plugin
+    __plugin_name__ = None
+
     def pre_initialize(self, maze):
         """Called when the maze has been initialised and all plugins loaded, but
         before the maze is initialised.

@@ -27,6 +27,7 @@ class EspressoPlugin(Plugin):
     """Compiles CoffeeScript to JavaScript during runtime and serves it."""
     __plugin_name__ = 'espresso'
 
+    @classmethod
     def _compile(self, source, destination_dir):
         """Compiles a Coffee script file source into a JavaScript file
         destination.
@@ -49,6 +50,7 @@ class EspressoPlugin(Plugin):
             raise ValueError(source)
 
     @MazePlugin.get('/espresso/<path:path>.js')
+    @classmethod
     def get_js(self, path):
         """Retrieves a *CoffeeScript* file and, if necessary, compiles it.
 
@@ -66,8 +68,8 @@ class EspressoPlugin(Plugin):
         target = os.path.join(self.cache_dir, path + '.js')
         coffee_file_rel = path + '.coffee'
 
-        if not os.path.isfile(target) or self.configuration('compile.always'):
-            for path in reversed(list(self.configuration.paths)):
+        if not os.path.isfile(target) or self.CONFIGURATION.compile.always:
+            for path in reversed(list(self.CONFIGURATION.paths)):
                 # Construct the filename of the CoffeeScript file
                 coffee_file = os.path.join(path, coffee_file_rel)
 
@@ -89,6 +91,7 @@ class EspressoPlugin(Plugin):
         return static_file(os.path.basename(target), os.path.dirname(target))
 
     @MazePlugin.get('/espresso/<path:path>.coffee')
+    @classmethod
     def get_coffee(self, path):
         """Retrieves a *CoffeeScript* file without compiling it.
 
@@ -103,7 +106,7 @@ class EspressoPlugin(Plugin):
         """
         coffee_file_rel = path + '.coffee'
 
-        for path in reversed(list(self.configuration.paths)):
+        for path in reversed(list(self.CONFIGURATION.paths)):
             # Construct the filename of the CoffeeScript file
             coffee_file = os.path.join(path, coffee_file_rel)
 

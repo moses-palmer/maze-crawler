@@ -100,3 +100,16 @@ class RouterPlugin3(Plugin):
     @MazePlugin.get('/router-blocker/<value>')
     def get_test(self, value):
         return {'value': value}
+
+@MazePlugin.router
+class RouterPlugin4(Plugin):
+    __plugin_name__ = 'router-4'
+
+    @MazePlugin.get('/router-classmethod/instancemethod')
+    def get_test1(self):
+        assert isinstance(self, RouterPlugin4)
+
+    @MazePlugin.get('/router-classmethod/classmethod')
+    @classmethod
+    def get_test2(self):
+        assert self is RouterPlugin4

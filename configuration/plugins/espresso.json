@@ -1,0 +1,7 @@
+{
+    "enabled": true,
+    "paths": [],
+    "compile": {
+        "always": false
+    }
+}

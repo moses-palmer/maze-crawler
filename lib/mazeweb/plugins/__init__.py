@@ -30,6 +30,10 @@ __path__ = (PLUGIN_PATH.split(os.pathsep) if not PLUGIN_PATH is None else []) \
 class Plugin(object):
     """A class describing the interface to plugin modules.
     """
+
+    #: The name of this plugin
+    __plugin_name__ = None
+
     def pre_initialize(self, maze):
         """Called when the maze has been initialised and all plugins loaded, but
         before the maze is initialised.
@@ -95,12 +99,6 @@ class Plugin(object):
         pass
 
     def __init__(self):
-        self.data_dir = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'),
-            self.name)
-        self.cache_dir = os.path.join(os.getenv('MAZEWEB_CACHE_DIR', '.'),
-            self.name)
-        if not os.path.isdir(self.cache_dir):
-            os.makedirs(self.cache_dir)
         self._configuration = None
 
     @property
@@ -166,6 +164,21 @@ class Plugin(object):
         # Wrap the configuration to make access easy
         self.CONFIGURATION = ConfigurationStore(data)
 
+    @classmethod
+    def initialize(self):
+        """Called by the plugin loader once the configuration and all
+        dependencies have been loaded.
+
+        This method sets :attr:`data_dir` and :attr:`cache_dir` by default; thus
+        plugins that override this method must make sure to call ``super``.
+        """
+        self.data_dir = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'),
+            self.__plugin_name__)
+        self.cache_dir = os.path.join(os.getenv('MAZEWEB_CACHE_DIR', '.'),
+            self.__plugin_name__)
+        if not os.path.isdir(self.cache_dir):
+            os.makedirs(self.cache_dir)
+
 
 def load():
     """Loads all configured plugin classes from all directories in
@@ -202,6 +215,9 @@ def load():
                         continue
                 except TypeError:
                     continue
+
+                # We have not yet called Plugin.initialize
+                value.initialized = False
 
                 try:
                     value.load_configuration()
@@ -242,6 +258,16 @@ def load():
                     if not all(d in PLUGINS for d in dependencies):
                         del PLUGINS[plugin]
                         continue_unloading = True
+
+            # Initialise all plugins
+            while any(not p.initialized for p in PLUGINS.values()):
+                for plugin in PLUGINS.values():
+                    if not plugin.initialized and all(
+                            PLUGINS[d].initialized
+                            for d in getattr(plugin, '__plugin_dependencies__',
+                                [])):
+                        plugin.initialize()
+                        plugin.initialized = True
 
 
 def unload():

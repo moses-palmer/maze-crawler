@@ -43,9 +43,11 @@ def inject_suites(suite_names):
                 self.path],
                 stderr = subprocess.STDOUT,
                 stdout = subprocess.PIPE)
+            stdout, stderr = process.communicate()
 
             # Locate lines printed by the jasmine runner reporter
-            for line in process.stdout:
+
+            for line in stdout.splitlines():
                 try:
                     # Extract the type of result
                     result = json.loads(line.strip())
@@ -58,6 +60,10 @@ def inject_suites(suite_names):
                 except (ValueError, KeyError, AttributeError):
                     # This is not a spec result
                     pass
+
+            if process.returncode:
+                raise RuntimeError('Failed to execute jasmine runner: %s',
+                    stdout)
 
             return self.failures
 

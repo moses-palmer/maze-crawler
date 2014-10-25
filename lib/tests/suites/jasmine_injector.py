@@ -58,7 +58,7 @@ def inject_suites(suite_names):
                     os.pardir,
                     'jasmine-runner.js')
             process = subprocess.Popen([
-                'nodejs',
+                os.getenv('NODEJS_BIN', 'nodejs'),
                 jasmine_runner,
                 self.path],
                 stderr = subprocess.STDOUT,

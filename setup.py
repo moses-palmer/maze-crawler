@@ -94,8 +94,19 @@ class dependencies(setuptools.Command):
         sys.stderr.write('node.js is not installed; terminating\n')
         sys.exit(1)
 
+    def npm(self):
+        """Makes sure that npm is installed"""
+        sys.stdout.write('Checking npm installation...\n')
+
+        try:
+            subprocess.call(['npm', '--version'])
+        except OSError:
+            sys.stderr.write('npm is not installed; terminating\n')
+            sys.exit(1)
+
     def run(self):
         self.node()
+        self.npm()
 
 COMMANDS = {
     'dependencies': dependencies,

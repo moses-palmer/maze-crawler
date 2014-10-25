@@ -2,6 +2,7 @@
 # coding: utf8
 
 import os
+import subprocess
 import sys
 
 
@@ -68,8 +69,33 @@ class dependencies(setuptools.Command):
     def finalize_options(self):
         pass
 
+    def node(self):
+        """Makes sure that node.js is installed"""
+        sys.stdout.write('Checking node.js installation...\n')
+
+        # Since node.js picked an already used binary name, we must check
+        # whether "node" is node.js or node - Amateur Packet Radio Node program;
+        # The former actually provides output for the --version command
+        try:
+            node_output = subprocess.check_output(['node', '--version'])
+            if node_output.strip():
+                sys.stdout.write(node_output)
+                return
+        except OSError:
+            pass
+
+        # On Debian, node is called nodejs because of the above mentioned clash
+        try:
+            subprocess.check_call(['nodejs', '--version'])
+            return
+        except OSError:
+            pass
+
+        sys.stderr.write('node.js is not installed; terminating\n')
+        sys.exit(1)
+
     def run(self):
-        pass
+        self.node()
 
 COMMANDS = {
     'dependencies': dependencies,

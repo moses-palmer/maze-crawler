@@ -2,41 +2,28 @@ import os
 import subprocess
 import tempfile
 
-def _run_script(code, arguments, suffix):
+def _run_script(code, *arguments):
     """
     Runs interpreted code.
 
     @param code
-        The code to execute. This is written to a temporary file.
+        The code to execute.
     @param arguments
-        The argument list to execute. A generated file name will be appeded to
-        this list before executing.
-    @param suffix
-        The file extension to use for the temporary file.
+        The argument list to execute.
     @return the output of the code
     @raise ValueError if the code could not be run
     """
-    try:
-        fd, name = tempfile.mkstemp(suffix = suffix)
-        with os.fdopen(fd, 'w') as f:
-            f.write(code)
+    p = subprocess.Popen(
+        arguments,
+        stdin = subprocess.PIPE,
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE)
+    stdout, stderr = p.communicate(code)
 
-        p = subprocess.Popen(
-            arguments + [name],
-            stdout = subprocess.PIPE,
-            stderr = subprocess.PIPE)
-        stdout, stderr = p.communicate()
+    if p.returncode:
+        raise ValueError(stderr)
 
-        if p.returncode:
-            raise ValueError(stderr)
-
-        return stdout
-
-    finally:
-        try:
-            os.unlink(name)
-        except:
-            pass
+    return stdout
 
 
 def run_js(code):
@@ -49,11 +36,8 @@ def run_js(code):
     @raise ValueError if the code could not be run
     @see run_script
     """
-    # nodejs must be installed on the system
-    nodejs_command = [
-        os.getenv('NODEJS_BIN', 'nodejs')]
-
-    return _run_script(code, nodejs_command, '.js')
+    return _run_script(code,
+        os.getenv('NODEJS_BIN', 'nodejs'))
 
 
 def run_coffee(code):
@@ -66,11 +50,8 @@ def run_coffee(code):
     @raise ValueError if the code could not be run
     @see run_script
     """
-    # coffe is located in coffee-script/bin in the project root; we are in
-    # tests/suites
-    coffee_command = [
-        os.getenv('NODEJS_BIN', 'nodejs'),
+    return _run_script(code,
         os.path.join(os.path.dirname(os.path.abspath(__file__)),
-            os.pardir, os.pardir, os.pardir, 'coffee-script', 'bin', 'coffee')]
-
-    return _run_script(code, coffee_command, '.coffee')
+            os.pardir, os.pardir, os.pardir, 'node_modules', 'coffee-script',
+            'bin', 'coffee'),
+        '--stdio')

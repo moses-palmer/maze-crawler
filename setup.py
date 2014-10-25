@@ -63,11 +63,14 @@ class test_runner(test):
 class dependencies(setuptools.Command):
     user_options = []
 
+    package_command = ['npm', 'install']
+
     def initialize_options(self):
         pass
 
     def finalize_options(self):
         pass
+
 
     def node(self):
         """Makes sure that node.js is installed"""
@@ -104,9 +107,22 @@ class dependencies(setuptools.Command):
             sys.stderr.write('npm is not installed; terminating\n')
             sys.exit(1)
 
+    def packages(self):
+        """Makes sure that dependencies are installed locally"""
+        sys.stdout.write('Checking dependencies...\n')
+
+        # Try to install it
+        try:
+            subprocess.check_call(self.package_command)
+            return
+        except (OSError, subprocess.CalledProcessError):
+            sys.stderr.write('Failed to install dependencies; terminating\n')
+            sys.exit(1)
+
     def run(self):
         self.node()
         self.npm()
+        self.packages()
 
 COMMANDS = {
     'dependencies': dependencies,

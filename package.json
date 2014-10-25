@@ -1,0 +1,10 @@
+{
+    "name": "maze-crawler-npm-dependencies",
+    "version": "1.0.0",
+    "repository": "https://github.com/moses-palmer/maze-crawler",
+    "dependencies": {
+        "coffee-script": ">=1.8.0",
+        "jasmine": ">=2.0.1",
+        "jasmine-node": ">=1.14.5"
+    }
+}

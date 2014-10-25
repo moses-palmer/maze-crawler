@@ -44,6 +44,8 @@ class test_runner(test):
         import importlib
         import tests
 
+        self.run_command('dependencies')
+
         failures = tests.run(self.test_suites)
         if failures is None:
             print('Test suite was cancelled by setup')
@@ -56,6 +58,22 @@ class test_runner(test):
                 '\t%s - %s' % (test.name, test.message)
                     for test in failures))
         sys.exit(len(failures))
+
+class dependencies(setuptools.Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        pass
+
+COMMANDS = {
+    'dependencies': dependencies,
+    'test': test_runner}
 
 
 # Read globals from <package>._info without loading it
@@ -101,8 +119,7 @@ except IOError:
 if __name__ == '__main__':
     try:
         setuptools.setup(
-            cmdclass = {
-                'test': test_runner},
+            cmdclass = COMMANDS,
             name = PROJECT_NAME,
             version = '.'.join(str(i) for i in INFO['version']),
             description = DESCRIPTION,

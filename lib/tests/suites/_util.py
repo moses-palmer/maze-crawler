@@ -34,14 +34,21 @@ def _server_start():
     """
     global _servers
 
+    # Extract the binary directories for dependencies
+    import glob
+    binary_directories = glob.glob(os.path.join(os.path.dirname(__file__),
+        os.pardir, os.pardir, os.pardir, 'node_modules', '*', 'bin'))
+
     port = _BASE_PORT + len(_servers)
     args = [sys.executable, '-m', 'bottle',
         '--bind=%s:%d' % (_HOST, port),
         '--debug',
         _SERVER_APPLICATION]
-    env = {
-        'PYTHONPATH': os.pathsep.join(sys.path)}
-    env.update(os.environ)
+    env = dict(os.environ)
+    env.update({
+        'PYTHONPATH': os.pathsep.join(sys.path),
+        'PATH': os.pathsep.join(binary_directories
+            + os.getenv('PATH', '').split(os.pathsep))})
 
     # Start bottle
     server = subprocess.Popen(args, env = env)

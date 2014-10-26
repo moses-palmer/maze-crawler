@@ -13,20 +13,6 @@ def inject_suites(suite_names):
     from .. import printf, suite, test
     from ._script_util import run_coffee
 
-    # Check that nodejs and jasmine-node are installed
-    args = {}
-    try:
-        with open(os.devnull, 'w') as devnull:
-            args['run_jasmine_suites'] = subprocess.call(
-                ['nodejs', '--eval', 'require("jasmine-node");'],
-                stdout = devnull,
-                stderr = devnull) == 0
-            if not args['run_jasmine_suites']:
-                args['error_message'] = 'jasmine-node is not installed'
-    except OSError:
-        args['error_message'] = 'nodejs is not installed'
-        args['run_jasmine_suites'] = False
-
     # These are the file extensions of files in the current directory that we
     # inject
     extensions = ('.coffee', '.js')
@@ -36,19 +22,13 @@ def inject_suites(suite_names):
         A callable that, when decorated with suite, injects a js or coffee suite
         as a test suite.
         """
-        def __init__(self, path, run_jasmine_suites = True,
-                error_message = None):
+        def __init__(self, path):
             self.__name__ = 'jasmine.' + os.path.basename(path).split('.', 1)[0]
             self.path = path
-            self.run_jasmine_suites = run_jasmine_suites
-            self.error_message = error_message
             self.failures = []
             self.specs = {}
 
         def setup(self):
-            if not self.run_jasmine_suites:
-                printf('Cannot run suite: %s' % (self.error_message))
-                return False
             return True
 
         def __call__(self):
@@ -58,14 +38,16 @@ def inject_suites(suite_names):
                     os.pardir,
                     'jasmine-runner.js')
             process = subprocess.Popen([
-                'nodejs',
+                os.getenv('NODEJS_BIN', 'nodejs'),
                 jasmine_runner,
                 self.path],
                 stderr = subprocess.STDOUT,
                 stdout = subprocess.PIPE)
+            stdout, stderr = process.communicate()
 
             # Locate lines printed by the jasmine runner reporter
-            for line in process.stdout:
+
+            for line in stdout.splitlines():
                 try:
                     # Extract the type of result
                     result = json.loads(line.strip())
@@ -78,6 +60,10 @@ def inject_suites(suite_names):
                 except (ValueError, KeyError, AttributeError):
                     # This is not a spec result
                     pass
+
+            if process.returncode:
+                raise RuntimeError('Failed to execute jasmine runner: %s',
+                    stdout)
 
             return self.failures
 
@@ -141,7 +127,7 @@ def inject_suites(suite_names):
                 and any(f.endswith(extension) for extension in extensions)):
         path = os.path.join(directory, filename)
 
-        s = JasmineSuite(path, **args)
+        s = JasmineSuite(path)
         if suite_names and not s.__name__ in suite_names:
             continue
 

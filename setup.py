@@ -124,8 +124,12 @@ class dependencies(setuptools.Command):
         self.npm()
         self.packages()
 
+class dependencies_install(dependencies):
+    package_command = ['npm', 'install', '-g']
+
 COMMANDS = {
     'dependencies': dependencies,
+    'dependencies_install': dependencies_install,
     'test': test_runner}
 
 

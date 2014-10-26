@@ -2,6 +2,7 @@
 # coding: utf8
 
 import os
+import subprocess
 import sys
 
 
@@ -27,6 +28,7 @@ sys.path.append(LIB_DIR)
 import setuptools
 
 from setuptools.command.test import test
+from setuptools.command.install import install
 
 
 class test_runner(test):
@@ -44,6 +46,8 @@ class test_runner(test):
         import importlib
         import tests
 
+        self.run_command('dependencies')
+
         failures = tests.run(self.test_suites)
         if failures is None:
             print('Test suite was cancelled by setup')
@@ -56,6 +60,84 @@ class test_runner(test):
                 '\t%s - %s' % (test.name, test.message)
                     for test in failures))
         sys.exit(len(failures))
+
+class dependencies(setuptools.Command):
+    user_options = []
+
+    package_command = ['npm', 'install']
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+
+    def node(self):
+        """Makes sure that node.js is installed"""
+        sys.stdout.write('Checking node.js installation...\n')
+
+        # Since node.js picked an already used binary name, we must check
+        # whether "node" is node.js or node - Amateur Packet Radio Node program;
+        # The former actually provides output for the --version command
+        try:
+            node_output = subprocess.check_output(['node', '--version'])
+            if node_output.strip():
+                sys.stdout.write(node_output)
+                return
+        except OSError:
+            pass
+
+        # On Debian, node is called nodejs because of the above mentioned clash
+        try:
+            subprocess.check_call(['nodejs', '--version'])
+            return
+        except OSError:
+            pass
+
+        sys.stderr.write('node.js is not installed; terminating\n')
+        sys.exit(1)
+
+    def npm(self):
+        """Makes sure that npm is installed"""
+        sys.stdout.write('Checking npm installation...\n')
+
+        try:
+            subprocess.call(['npm', '--version'])
+        except OSError:
+            sys.stderr.write('npm is not installed; terminating\n')
+            sys.exit(1)
+
+    def packages(self):
+        """Makes sure that dependencies are installed locally"""
+        sys.stdout.write('Checking dependencies...\n')
+
+        # Try to install it
+        try:
+            subprocess.check_call(self.package_command)
+            return
+        except (OSError, subprocess.CalledProcessError):
+            sys.stderr.write('Failed to install dependencies; terminating\n')
+            sys.exit(1)
+
+    def run(self):
+        self.node()
+        self.npm()
+        self.packages()
+
+class dependencies_install(dependencies):
+    package_command = ['npm', 'install', '-g']
+
+class install_with_dependencies(install):
+    def run(self):
+        self.run_command('dependencies_install')
+        install.run(self)
+
+COMMANDS = {
+    'dependencies': dependencies,
+    'dependencies_install': dependencies_install,
+    'install': install_with_dependencies,
+    'test': test_runner}
 
 
 # Read globals from <package>._info without loading it
@@ -101,8 +183,7 @@ except IOError:
 if __name__ == '__main__':
     try:
         setuptools.setup(
-            cmdclass = {
-                'test': test_runner},
+            cmdclass = COMMANDS,
             name = PROJECT_NAME,
             version = '.'.join(str(i) for i in INFO['version']),
             description = DESCRIPTION,

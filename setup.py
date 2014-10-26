@@ -28,6 +28,7 @@ sys.path.append(LIB_DIR)
 import setuptools
 
 from setuptools.command.test import test
+from setuptools.command.install import install
 
 
 class test_runner(test):
@@ -127,9 +128,15 @@ class dependencies(setuptools.Command):
 class dependencies_install(dependencies):
     package_command = ['npm', 'install', '-g']
 
+class install_with_dependencies(install):
+    def run(self):
+        self.run_command('dependencies_install')
+        install.run(self)
+
 COMMANDS = {
     'dependencies': dependencies,
     'dependencies_install': dependencies_install,
+    'install': install_with_dependencies,
     'test': test_runner}
 
 

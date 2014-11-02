@@ -17,7 +17,7 @@
 import os
 import subprocess
 
-from .. import Plugin
+from .. import Plugin, PLUGINS
 from bottle import HTTPError, ResourceManager, static_file
 from mazeweb.crawler.plugin import MazePlugin
 
@@ -26,19 +26,25 @@ from mazeweb.crawler.plugin import MazePlugin
 class EspressoPlugin(Plugin):
     """Compiles CoffeeScript to JavaScript during runtime and serves it."""
     __plugin_name__ = 'espresso'
+    __plugin_dependencies__ = ['javascript']
+
+    @classmethod
+    def initialize(self):
+        super(EspressoPlugin, self).initialize()
+        PLUGINS['javascript'].sources.append(self)
 
     @classmethod
     def _compile(self, source, destination_dir):
-        """Compiles a Coffee script file source into a JavaScript file
+        """Compiles a *Coffee script* file source into a *JavaScript* file
         destination.
 
-        The compilation is performed by the coffe compiler installed on the
+        The compilation is performed by the ``coffe`` compiler installed on the
         system.
 
-        :param str source: The source CoffeScript file.
+        :param str source: The source *CoffeScript* file.
 
         :param str destination_dir: The destinataion directory for the
-            JavaScript file.
+            *JavaScript* file.
 
         :raises ValueError: if the source file cannot be compiled
         """
@@ -49,22 +55,19 @@ class EspressoPlugin(Plugin):
         if code:
             raise ValueError(source)
 
-    @MazePlugin.get('/espresso/<path:path>.js')
     @classmethod
-    def get_js(self, path):
+    def javascript_from_partial_path(self, partial):
         """Retrieves a *CoffeeScript* file and, if necessary, compiles it.
 
         The response is a *JavaScript* file.
 
         :param str path: The base path to the file to retrieve. The file
             extensions '.coffee' and '.js' are appended.
-
-        :statuscode 200: the file was found and compiled
-
-        :statusocde 404: the file does not exist
-
-        :statuscode 500: the *CoffeeScript* failed to compile
         """
+        if not partial.startswith('espresso/'):
+            return
+        path = partial[len('espresso/'):]
+
         target = os.path.join(self.cache_dir, path + '.js')
         coffee_file_rel = path + '.coffee'
 
@@ -82,13 +85,10 @@ class EspressoPlugin(Plugin):
                             coffee_file))
 
                 if os.path.isfile(coffee_file):
-                    try:
-                        self._compile(coffee_file, os.path.dirname(target))
-                        break
-                    except ValueError:
-                        raise HTTPError(status = 500)
+                    self._compile(coffee_file, os.path.dirname(target))
+                    break
 
-        return static_file(os.path.basename(target), os.path.dirname(target))
+        return target
 
     @MazePlugin.get('/espresso/<path:path>.coffee')
     @classmethod

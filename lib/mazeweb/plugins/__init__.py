@@ -172,10 +172,12 @@ class Plugin(object):
         This method sets :attr:`data_dir` and :attr:`cache_dir` by default; thus
         plugins that override this method must make sure to call ``super``.
         """
-        self.data_dir = os.path.join(os.getenv('MAZEWEB_DATA_DIR', '.'),
-            self.__plugin_name__)
-        self.cache_dir = os.path.join(os.getenv('MAZEWEB_CACHE_DIR', '.'),
-            self.__plugin_name__)
+        self.data_dir = os.path.realpath(os.path.join(
+            os.getenv('MAZEWEB_DATA_DIR', '.'),
+            self.__plugin_name__))
+        self.cache_dir = os.path.realpath(os.path.join(
+            os.getenv('MAZEWEB_CACHE_DIR', '.'),
+            self.__plugin_name__))
         if not os.path.isdir(self.cache_dir):
             os.makedirs(self.cache_dir)
 

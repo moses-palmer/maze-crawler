@@ -59,6 +59,11 @@ class MazeMapper(object):
                         if square == '#' else
                     self.DIRECTIONS[int(square, 10)]
                         if square in '0123456789' else
+                    tuple(self.DIRECTIONS[v % len(self.DIRECTIONS)]
+                            for v in range(
+                                ord(square) - ord('A'),
+                                ord(square) - ord('A') + 2))
+                        if square in 'ABCDEFGHIJ' else
                     square
                     for square in line)
                 for line in room)
@@ -119,11 +124,13 @@ class MazeMapper(object):
         # value, otherwise we must see if the specified room has a wall
         if value is False or value is True or value is None:
             return value
+        elif isinstance(value, int):
+            return not value in self.walker.maze[room_pos]
+        elif isinstance(value, tuple):
+            return not all(v in self.walker.maze[room_pos]
+                for v in value)
         else:
-            try:
-                return not int(value) in self.walker.maze[room_pos]
-            except ValueError:
-                return None
+            return None
 
 
 from maze.tri import TriMaze

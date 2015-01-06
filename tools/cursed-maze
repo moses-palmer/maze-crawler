@@ -242,26 +242,28 @@ def center_on(win, world_pos):
         oy)
 
 def screen_to_world(screen_pos):
-    """
-    Transforms a screen coordinate to a world coordinate.
+    """Transforms a screen coordinate to a world coordinate.
 
     The return value may not be inside the maze.
 
-    @param screen_pos
-        The screen position to convert.
-    @return the corresponding world coordinate
+    :param screen_pos: The screen position to convert.
+    :type screen_pos: (int, int)
+
+    :return: the corresponding world coordinate
+    :rtype: (int, int)
     """
     global _view_offset
     return tuple(sp + o for sp, o in zip(screen_pos, _view_offset))
 
 
 def world_to_screen(world_pos):
-    """
-    Transforms a world coordinate to a screen coordinate.
+    """Transforms a world coordinate to a screen coordinate.
 
-    @param world_pos
-        The world position to convert.
-    @return the corresponding screen coordinate
+    :param world_pos: The world position to convert.
+    :type world_pos: (int, iny)
+
+    :return: the corresponding screen coordinate
+    :rtype: (int, int)
     """
     global _view_offset
     return tuple(wp - o for wp, o in zip(world_pos, _view_offset))

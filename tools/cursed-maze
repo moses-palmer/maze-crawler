@@ -59,6 +59,11 @@ class MazeMapper(object):
                         if square == '#' else
                     self.DIRECTIONS[int(square, 10)]
                         if square in '0123456789' else
+                    tuple(self.DIRECTIONS[v % len(self.DIRECTIONS)]
+                            for v in range(
+                                ord(square) - ord('A'),
+                                ord(square) - ord('A') + 2))
+                        if square in 'ABCDEFGHIJ' else
                     square
                     for square in line)
                 for line in room)
@@ -119,11 +124,13 @@ class MazeMapper(object):
         # value, otherwise we must see if the specified room has a wall
         if value is False or value is True or value is None:
             return value
+        elif isinstance(value, int):
+            return not value in self.walker.maze[room_pos]
+        elif isinstance(value, tuple):
+            return not all(v in self.walker.maze[room_pos]
+                for v in value)
         else:
-            try:
-                return not int(value) in self.walker.maze[room_pos]
-            except ValueError:
-                return None
+            return None
 
 
 from maze.tri import TriMaze
@@ -170,12 +177,12 @@ from maze.quad import Maze
 
 @MazeMapper.mapper(len(Maze.Wall.WALLS))
 class QuadMazeMapper(MazeMapper):
-    DIRECTIONS = (Maze.Wall.UP, Maze.Wall.LEFT, Maze.Wall.RIGHT, Maze.Wall.DOWN)
+    DIRECTIONS = (Maze.Wall.UP, Maze.Wall.LEFT, Maze.Wall.DOWN, Maze.Wall.RIGHT)
     LAYOUTS = (
         (
-            '#33#',
-            '1  2',
-            '#00#'),)
+            'B22C',
+            '1  3',
+            'A00D'),)
 
     def world_to_room(self, world_pos):
         room_pos = (
@@ -242,26 +249,28 @@ def center_on(win, world_pos):
         oy)
 
 def screen_to_world(screen_pos):
-    """
-    Transforms a screen coordinate to a world coordinate.
+    """Transforms a screen coordinate to a world coordinate.
 
     The return value may not be inside the maze.
 
-    @param screen_pos
-        The screen position to convert.
-    @return the corresponding world coordinate
+    :param screen_pos: The screen position to convert.
+    :type screen_pos: (int, int)
+
+    :return: the corresponding world coordinate
+    :rtype: (int, int)
     """
     global _view_offset
     return tuple(sp + o for sp, o in zip(screen_pos, _view_offset))
 
 
 def world_to_screen(world_pos):
-    """
-    Transforms a world coordinate to a screen coordinate.
+    """Transforms a world coordinate to a screen coordinate.
 
-    @param world_pos
-        The world position to convert.
-    @return the corresponding screen coordinate
+    :param world_pos: The world position to convert.
+    :type world_pos: (int, iny)
+
+    :return: the corresponding screen coordinate
+    :rtype: (int, int)
     """
     global _view_offset
     return tuple(wp - o for wp, o in zip(world_pos, _view_offset))

@@ -37,12 +37,19 @@ def inject_suites(suite_names):
                     os.path.dirname(__file__),
                     os.pardir,
                     'jasmine-runner.js')
+            lib_dir = os.path.join(
+                    os.path.dirname(__file__), os.pardir, os.pardir,
+                    'mazeweb', 'plugins', 'javascript', 'lib')
+            env = dict(os.environ)
+            env['NODE_PATH'] = os.path.sep.join((
+                lib_dir, os.getenv('NODE_PATH', '.')))
             process = subprocess.Popen([
                 os.getenv('NODEJS_BIN', 'nodejs'),
                 jasmine_runner,
                 self.path],
                 stderr = subprocess.STDOUT,
-                stdout = subprocess.PIPE)
+                stdout = subprocess.PIPE,
+                env = env)
             stdout, stderr = process.communicate()
 
             # Locate lines printed by the jasmine runner reporter
